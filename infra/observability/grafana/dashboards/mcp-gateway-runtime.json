@@ -1,0 +1,66 @@
+{
+  "uid": "mcp-gateway-runtime",
+  "title": "MCP Gateway Runtime",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Gateway Request Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (decision) (rate(mcp_gateway_requests_total[1m]))", "legendFormat": "{{decision}}" }]
+    },
+    {
+      "id": 2,
+      "title": "Gateway Latency Histogram",
+      "type": "heatmap",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(mcp_gateway_request_duration_seconds_bucket[5m])) by (le)", "format": "heatmap", "legendFormat": "{{le}}" }]
+    },
+    {
+      "id": 3,
+      "title": "Tool Invocation Latency by Tool",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(mcp_tool_invocation_duration_seconds_bucket[5m])) by (tool_name, le))", "legendFormat": "{{tool_name}} p95" }]
+    },
+    {
+      "id": 4,
+      "title": "Error Rate by Connector and Tool",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (connector_id, tool_name) (rate(mcp_tool_invocation_errors_total[5m]))", "legendFormat": "{{connector_id}} {{tool_name}}" }]
+    },
+    {
+      "id": 5,
+      "title": "Policy Evaluation Latency",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(mcp_policy_evaluation_duration_seconds_bucket[5m])) by (le))", "legendFormat": "policy p95" }]
+    },
+    {
+      "id": 6,
+      "title": "RBAC Check Count",
+      "type": "barchart",
+      "gridPos": { "h": 7, "w": 4, "x": 16, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (permission, decision) (increase(mcp_rbac_checks_total[1h]))", "legendFormat": "{{permission}} {{decision}}" }]
+    },
+    {
+      "id": 7,
+      "title": "Recent Denied Requests",
+      "type": "table",
+      "gridPos": { "h": 7, "w": 4, "x": 20, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (connector_id, tool_name, reason_code) (increase(mcp_gateway_requests_total{decision=\"denied\"}[15m]))", "format": "table", "legendFormat": "{{connector_id}} {{tool_name}}" }]
+    }
+  ]
+}

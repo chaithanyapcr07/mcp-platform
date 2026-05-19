@@ -11,7 +11,9 @@ import { registerRbacRoutes } from "./rbac/rbac.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
 import { registerTemplateRoutes } from "./templates/templates.routes.js";
 import { registerGatewayRoutes } from "./gateway/gateway.routes.js";
-import { getMetricsSnapshot } from "./observability/metrics.js";
+import { getMetricsSnapshot, prometheusContentType, prometheusMetrics } from "./observability/metrics.js";
+import { observabilityConfig } from "./observability/tracing.js";
+import { getSiemExportStatus } from "./audit/siem-exporter.js";
 
 export async function buildApp(db: DbClient = prisma) {
   const app = Fastify({
@@ -32,15 +34,33 @@ export async function buildApp(db: DbClient = prisma) {
 
   app.get("/health", async () => ({ ok: true, service: "mcp-platform-api" }));
   app.get("/observability/metrics", async () => getMetricsSnapshot());
+  app.get("/metrics", async (_request, reply) => {
+    reply.header("content-type", prometheusContentType());
+    return prometheusMetrics();
+  });
+  app.get("/observability/health", async () => {
+    const config = observabilityConfig();
+    return {
+      ok: true,
+      metrics: { enabled: config.metricsEnabled, endpoint: "/metrics" },
+      tracing: { enabled: config.tracingEnabled, collectorEndpoint: config.otelCollectorEndpoint },
+      auditExport: {
+        enabled: config.auditExportEnabled,
+        mode: config.exporterMode,
+        status: getSiemExportStatus()
+      },
+      prometheus: { scrapeEndpoint: config.prometheusScrapeEndpoint }
+    };
+  });
+  app.get("/observability/config", async () => observabilityConfig());
 
   app.setErrorHandler((error, _request, reply) => {
     if (error instanceof ApiError) {
       reply.status(error.statusCode).send({
-        error: {
-          code: error.code,
-          message: error.message,
-          details: error.details
-        }
+        error: error.code,
+        reason: error.message,
+        requestId: _request.id,
+        details: error.details
       });
       return;
     }

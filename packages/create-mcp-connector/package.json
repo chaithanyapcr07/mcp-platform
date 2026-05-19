@@ -1,0 +1,14 @@
+{
+  "name": "@mcp-platform/create-mcp-connector",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "create-mcp-connector": "src/index.js"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.5"
+  }
+}

@@ -1,7 +1,52 @@
 # Custom Connector Guide
 
-Use packages/connector-sdk or a connector template. Implement /health, /manifest, and /tools/{tool}/invoke, mark write tools explicitly, validate schemas, and avoid raw secrets.
+Start from the generator unless you have a strong reason not to.
 
-## Local MVP Notes
+```bash
+npm run create:connector -- --name my-team-connector --template custom-team-owned
+```
 
-Definitions in Git represent desired state. Runtime state belongs in PostgreSQL or external enterprise systems. The gateway is implemented inside the API for the MVP but structured as a module that can be split into an independently deployed data-plane service.
+## Required Runtime Endpoints
+
+Connector runtimes should expose:
+
+- `GET /health`
+- `GET /manifest`
+- `POST /tools/{toolName}/invoke`
+
+The MCP Gateway calls the connector runtime after auth, RBAC, project access, and policy checks.
+
+## Required Files
+
+- `connector.yaml`
+- `README.md`
+- `.env.example`
+- `Dockerfile`
+- `src/server.ts`
+- `src/tools/`
+- `src/resources/`
+- `src/prompts/`
+- `src/auth/`
+- `tests/`
+
+## Add A Tool
+
+1. Add input validation.
+2. Implement mock/local behavior.
+3. Implement real adapter behavior.
+4. Register the route handler.
+5. Add tool metadata to `connector.yaml`.
+6. Add registry metadata.
+7. Add tests.
+8. Verify allowed and denied audit events.
+
+## Reference Implementation
+
+Use `connectors/jira` as the reference for:
+
+- mock mode
+- real API-token mode
+- read and write tools
+- resource and prompt declarations
+- gateway invocation examples
+- security checklist

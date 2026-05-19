@@ -1,0 +1,66 @@
+{
+  "uid": "mcp-connector-jira",
+  "title": "MCP Connector: Jira",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "jira.search_issues Invocations",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_tool_invocations_total{connector_id=\"jira\",tool_name=\"jira.search_issues\"}[1h]))", "legendFormat": "search" }]
+    },
+    {
+      "id": 2,
+      "title": "jira.get_issue Invocations",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 5, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_tool_invocations_total{connector_id=\"jira\",tool_name=\"jira.get_issue\"}[1h]))", "legendFormat": "get" }]
+    },
+    {
+      "id": 3,
+      "title": "jira.create_issue Denied vs Allowed",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 7, "x": 10, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (decision) (rate(mcp_gateway_requests_total{connector_id=\"jira\",tool_name=\"jira.create_issue\"}[5m]))", "legendFormat": "{{decision}}" }]
+    },
+    {
+      "id": 4,
+      "title": "Write Approval Required Count",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 7, "x": 17, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_policy_denials_total{connector_id=\"jira\",reason_code=\"APPROVAL_REQUIRED\"}[1h]))", "legendFormat": "approval required" }]
+    },
+    {
+      "id": 5,
+      "title": "Jira Connector Latency",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(mcp_tool_invocation_duration_seconds_bucket{connector_id=\"jira\"}[5m])) by (tool_name, le))", "legendFormat": "{{tool_name}} p95" }]
+    },
+    {
+      "id": 6,
+      "title": "Jira Connector Errors",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (tool_name) (rate(mcp_connector_errors_total{connector_id=\"jira\"}[5m]))", "legendFormat": "{{tool_name}}" }]
+    },
+    {
+      "id": 7,
+      "title": "Mock Mode vs Real Mode Indicator",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "max(mcp_connector_health_status{connector_id=\"jira\"})", "legendFormat": "1 healthy; inspect /gateway/connectors/jira/health for authMode" }]
+    }
+  ]
+}

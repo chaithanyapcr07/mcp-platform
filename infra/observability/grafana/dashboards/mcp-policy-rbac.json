@@ -1,0 +1,66 @@
+{
+  "uid": "mcp-policy-rbac",
+  "title": "MCP Policy and RBAC",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Policy Decisions Allowed vs Denied",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (decision) (rate(mcp_policy_decisions_total[5m]))", "legendFormat": "{{decision}}" }]
+    },
+    {
+      "id": 2,
+      "title": "Denials by Reason Code",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (reason_code) (increase(mcp_policy_denials_total[1h]))", "legendFormat": "{{reason_code}}" }]
+    },
+    {
+      "id": 3,
+      "title": "RBAC Checks by Permission",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (permission, decision) (increase(mcp_rbac_checks_total[1h]))", "legendFormat": "{{permission}} {{decision}}" }]
+    },
+    {
+      "id": 4,
+      "title": "Restricted Data Denials",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_policy_denials_total{reason_code=\"RESTRICTED_DATA_DENIED\"}[1h]))", "legendFormat": "restricted" }]
+    },
+    {
+      "id": 5,
+      "title": "High-risk Write Action Blocks",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_policy_denials_total{reason_code=\"HIGH_RISK_WRITE_BLOCKED\"}[1h]))", "legendFormat": "write blocks" }]
+    },
+    {
+      "id": 6,
+      "title": "Approval-required Decisions",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_policy_denials_total{reason_code=\"APPROVAL_REQUIRED\"}[1h]))", "legendFormat": "approvals" }]
+    },
+    {
+      "id": 7,
+      "title": "RBAC Denials",
+      "type": "stat",
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_rbac_denials_total[1h]))", "legendFormat": "rbac denied" }]
+    }
+  ]
+}

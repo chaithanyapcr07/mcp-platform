@@ -1,0 +1,74 @@
+{
+  "uid": "mcp-platform-overview",
+  "title": "MCP Platform Overview",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Gateway Requests",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_gateway_requests_total[1h]))", "legendFormat": "requests" }]
+    },
+    {
+      "id": 2,
+      "title": "Allowed vs Denied Requests",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 9, "x": 6, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (decision) (rate(mcp_gateway_requests_total[5m]))", "legendFormat": "{{decision}}" }]
+    },
+    {
+      "id": 3,
+      "title": "P95 Gateway Latency",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 5, "x": 15, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(mcp_gateway_request_duration_seconds_bucket[5m])) by (le))", "legendFormat": "p95" }]
+    },
+    {
+      "id": 4,
+      "title": "Auth Failures",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(increase(mcp_auth_failures_total[1h]))", "legendFormat": "failures" }]
+    },
+    {
+      "id": 5,
+      "title": "Tool Invocation Count by Connector",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (connector_id) (increase(mcp_tool_invocations_total[1h]))", "legendFormat": "{{connector_id}}" }]
+    },
+    {
+      "id": 6,
+      "title": "Policy Denials by Reason",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (reason_code) (increase(mcp_policy_denials_total[1h]))", "legendFormat": "{{reason_code}}" }]
+    },
+    {
+      "id": 7,
+      "title": "Connector Health",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 4, "x": 16, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "max by (connector_id, status) (mcp_connector_health_status)", "legendFormat": "{{connector_id}} {{status}}" }]
+    },
+    {
+      "id": 8,
+      "title": "Audit Events Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 4, "x": 20, "y": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (decision) (rate(mcp_audit_events_total[5m]))", "legendFormat": "{{decision}}" }]
+    }
+  ]
+}

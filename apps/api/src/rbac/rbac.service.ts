@@ -1,4 +1,6 @@
 import type { DbClient } from "../db/client.js";
+import { rbacChecksTotal, rbacDenialsTotal } from "../observability/metrics.js";
+import { withSpan } from "../observability/tracing.js";
 
 export const rolePermissions: Record<string, string[]> = {
   platform_admin: [
@@ -46,19 +48,34 @@ export const rolePermissions: Record<string, string[]> = {
 };
 
 export async function getUserPermissions(db: DbClient, userId: string): Promise<string[]> {
-  const assignments = await db.roleAssignment.findMany({
-    where: { userId },
-    include: { role: { include: { permissions: { include: { permission: true } } } } }
+  return withSpan("rbac.check", {
+    actor_id: userId,
+    decision: "lookup",
+    reason_code: "PERMISSION_LOOKUP"
+  }, async () => {
+    const assignments = await db.roleAssignment.findMany({
+      where: { userId },
+      include: { role: { include: { permissions: { include: { permission: true } } } } }
+    });
+    return [
+      ...new Set(assignments.flatMap((assignment) => assignment.role.permissions.map((entry) => entry.permission.name)))
+    ];
   });
-  return [
-    ...new Set(assignments.flatMap((assignment) => assignment.role.permissions.map((entry) => entry.permission.name)))
-  ];
 }
 
 export async function requirePermission(db: DbClient, userId: string, permission: string): Promise<void> {
-  const permissions = await getUserPermissions(db, userId);
-  if (!permissions.includes(permission)) {
-    const { forbidden } = await import("../errors.js");
-    throw forbidden(`Actor lacks ${permission}`);
-  }
+  await withSpan("rbac.check", {
+    actor_id: userId,
+    decision: "pending",
+    reason_code: "PERMISSION_CHECK"
+  }, async () => {
+    const permissions = await getUserPermissions(db, userId);
+    const allowed = permissions.includes(permission);
+    rbacChecksTotal.inc({ permission, decision: allowed ? "allowed" : "denied", reason_code: allowed ? "RBAC_ALLOWED" : "RBAC_DENIED" });
+    if (!allowed) {
+      rbacDenialsTotal.inc({ permission, reason_code: "RBAC_DENIED" });
+      const { forbidden } = await import("../errors.js");
+      throw forbidden(`Actor lacks ${permission}`);
+    }
+  });
 }

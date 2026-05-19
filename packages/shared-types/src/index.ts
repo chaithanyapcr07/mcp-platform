@@ -11,7 +11,7 @@ export const lifecycleStatusSchema = z.enum([
 export const riskLevelSchema = z.enum(["low", "medium", "high", "critical"]);
 export const dataClassificationSchema = z.enum(["public", "internal", "confidential", "restricted"]);
 export const runtimeTypeSchema = z.enum(["managed", "remote", "custom"]);
-export const authTypeSchema = z.enum(["oauth2", "api_key", "service_account", "workload_identity", "none"]);
+export const authTypeSchema = z.enum(["oauth2", "api_key", "api_token", "service_account", "workload_identity", "none"]);
 export const decisionSchema = z.enum(["allowed", "denied", "requires_approval"]);
 
 export const toolCapabilitySchema = z.object({
@@ -109,7 +109,12 @@ export const auditEventSchema = z.object({
   toolName: z.string().optional(),
   decision: decisionSchema,
   reason: z.string(),
+  reasonCode: z.string().optional(),
   requestId: z.string(),
+  traceId: z.string().optional(),
+  spanId: z.string().optional(),
+  riskLevel: riskLevelSchema.optional(),
+  dataClassification: dataClassificationSchema.optional(),
   metadata: z.record(z.unknown()).default({})
 });
 

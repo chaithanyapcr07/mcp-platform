@@ -1,0 +1,32 @@
+id: summarize-open-bugs
+name: Summarize Open Bugs
+description: Searches Jira for open bugs and summarizes current engineering risk.
+owner_team: ai-platform
+version: 0.1.0
+status: approved
+required_skills:
+  - engineering-ticket-management
+workflow:
+  - skill: engineering-ticket-management
+    tool: jira.search_issues
+    approval_required: false
+input_schema:
+  type: object
+  required: [jql]
+  properties:
+    jql: { type: string }
+    maxResults: { type: number }
+output_schema:
+  type: object
+execution_constraints:
+  timeout_seconds: 30
+  max_steps: 2
+approval_behavior: none
+policy_constraints:
+  - read_only
+audit_requirements:
+  - task_execution
+  - tool_invocations
+test_cases:
+  - input: { jql: "project = DEMO AND issuetype = Bug ORDER BY created DESC" }
+    expect: issues

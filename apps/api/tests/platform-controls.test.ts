@@ -32,6 +32,25 @@ const connector = connectorManifestSchema.parse({
   dataClassification: "internal"
 });
 
+const jiraConnector = connectorManifestSchema.parse({
+  id: "jira",
+  name: "Jira MCP Connector",
+  description: "Governed Jira",
+  ownerTeam: "ai-platform",
+  businessDomain: "engineering",
+  connectorType: "issue_tracker",
+  version: "0.1.0",
+  status: "approved",
+  runtimeType: "managed",
+  authType: "api_token",
+  requiredScopes: ["read:jira-work", "write:jira-work"],
+  tools: [],
+  resources: [],
+  prompts: [],
+  riskLevel: "high",
+  dataClassification: "confidential"
+});
+
 const tool = {
   name: "search_items",
   description: "Search",
@@ -40,6 +59,26 @@ const tool = {
   permissions: ["kb:read"],
   write: false,
   riskLevel: "low" as const
+};
+
+const jiraSearchTool = {
+  name: "jira.search_issues",
+  description: "Search Jira issues",
+  inputSchema: {},
+  outputSchema: {},
+  permissions: ["tool:execute"],
+  write: false,
+  riskLevel: "low" as const
+};
+
+const jiraCreateTool = {
+  name: "jira.create_issue",
+  description: "Create Jira issue",
+  inputSchema: {},
+  outputSchema: {},
+  permissions: ["tool:execute"],
+  write: true,
+  riskLevel: "high" as const
 };
 
 describe("MCP Platform controls", () => {
@@ -154,7 +193,7 @@ describe("MCP Platform controls", () => {
     });
     expect(missingProjectAccess).toMatchObject({
       decision: "denied",
-      reason: "Project does not have approved connector access"
+      reason: "Project does not have access to connector local-knowledge-base"
     });
   });
 
@@ -184,5 +223,44 @@ describe("MCP Platform controls", () => {
       decision: "denied",
       reason: "Project does not have approved task access"
     });
+  });
+
+  it("allows Jira search when project has explicit high-risk connector access", () => {
+    const result = new PolicyEvaluator().evaluateConnectorTool({
+      actor,
+      connector: jiraConnector,
+      tool: jiraSearchTool,
+      hasProjectConnectorAccess: true,
+      hasExplicitRestrictedApproval: true,
+      hasWriteAccess: false,
+      requestId: "r1"
+    });
+    expect(result.decision).toBe("allowed");
+  });
+
+  it("denies Jira search when project access is missing", () => {
+    const result = new PolicyEvaluator().evaluateConnectorTool({
+      actor,
+      connector: jiraConnector,
+      tool: jiraSearchTool,
+      hasProjectConnectorAccess: false,
+      hasExplicitRestrictedApproval: false,
+      hasWriteAccess: false,
+      requestId: "r1"
+    });
+    expect(result).toMatchObject({ decision: "denied" });
+  });
+
+  it("requires approval for Jira write tools", () => {
+    const result = new PolicyEvaluator().evaluateConnectorTool({
+      actor,
+      connector: jiraConnector,
+      tool: jiraCreateTool,
+      hasProjectConnectorAccess: true,
+      hasExplicitRestrictedApproval: true,
+      hasWriteAccess: true,
+      requestId: "r1"
+    });
+    expect(result.decision).toBe("requires_approval");
   });
 });

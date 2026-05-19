@@ -1,3 +1,4 @@
+import "./observability/tracing.js";
 import { buildApp } from "./app.js";
 
 const app = await buildApp();

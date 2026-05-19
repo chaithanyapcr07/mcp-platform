@@ -9,6 +9,7 @@ import {
 } from "@mcp-platform/shared-types";
 import type { DbClient } from "../db/client.js";
 import { badRequest, notFound } from "../errors.js";
+import { withSpan } from "../observability/tracing.js";
 import { toConnectorManifest, toSkillManifest, toTaskManifest } from "./manifest-mappers.js";
 
 export async function listConnectors(db: DbClient) {
@@ -16,9 +17,11 @@ export async function listConnectors(db: DbClient) {
 }
 
 export async function getConnectorManifest(db: DbClient, id: string): Promise<ConnectorManifest> {
-  const connector = await db.connector.findUnique({ where: { id }, include: { tools: true, resources: true, prompts: true } });
-  if (!connector) throw notFound("Connector");
-  return toConnectorManifest(connector as any);
+  return withSpan("registry.lookup_connector", { connector_id: id }, async () => {
+    const connector = await db.connector.findUnique({ where: { id }, include: { tools: true, resources: true, prompts: true } });
+    if (!connector) throw notFound("Connector");
+    return toConnectorManifest(connector as any);
+  });
 }
 
 export async function upsertConnector(db: DbClient, input: unknown) {
@@ -107,12 +110,14 @@ export async function listSkills(db: DbClient) {
 }
 
 export async function getSkillManifest(db: DbClient, id: string): Promise<SkillManifest> {
-  const skill = await db.skill.findUnique({
-    where: { id },
-    include: { connectors: true, tools: true, resources: true, prompts: true, evals: true }
+  return withSpan("registry.lookup_skill", { skill_id: id }, async () => {
+    const skill = await db.skill.findUnique({
+      where: { id },
+      include: { connectors: true, tools: true, resources: true, prompts: true, evals: true }
+    });
+    if (!skill) throw notFound("Skill");
+    return toSkillManifest(skill);
   });
-  if (!skill) throw notFound("Skill");
-  return toSkillManifest(skill);
 }
 
 export async function upsertSkill(db: DbClient, input: unknown) {
@@ -167,9 +172,11 @@ export async function listTasks(db: DbClient) {
 }
 
 export async function getTaskManifest(db: DbClient, id: string): Promise<TaskManifest> {
-  const task = await db.task.findUnique({ where: { id }, include: { skills: true, evals: true } });
-  if (!task) throw notFound("Task");
-  return toTaskManifest(task);
+  return withSpan("registry.lookup_task", { task_id: id }, async () => {
+    const task = await db.task.findUnique({ where: { id }, include: { skills: true, evals: true } });
+    if (!task) throw notFound("Task");
+    return toTaskManifest(task);
+  });
 }
 
 export async function upsertTask(db: DbClient, input: unknown) {

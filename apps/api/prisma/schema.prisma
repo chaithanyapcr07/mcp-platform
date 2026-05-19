@@ -420,11 +420,17 @@ model AuditEvent {
   toolName     String?  @map("tool_name")
   decision     String
   reason       String
+  reasonCode   String?  @map("reason_code")
   requestId    String   @map("request_id")
-  metadata     Json
-  actor        User     @relation(fields: [actorId], references: [id])
+  traceId      String?  @map("trace_id")
+  spanId       String?  @map("span_id")
+  riskLevel          String? @map("risk_level")
+  dataClassification String? @map("data_classification")
+  metadata           Json
+  actor              User    @relation(fields: [actorId], references: [id])
 
   @@index([requestId])
+  @@index([traceId])
   @@index([projectId])
   @@map("audit_events")
 }

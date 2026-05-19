@@ -1,0 +1,66 @@
+{
+  "uid": "mcp-audit-siem",
+  "title": "MCP Audit and SIEM",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Audit Events Created",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum(rate(mcp_audit_events_total[5m]))", "legendFormat": "audit events" }]
+    },
+    {
+      "id": 2,
+      "title": "Audit Events by Action",
+      "type": "barchart",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (action) (increase(mcp_audit_events_total[1h]))", "legendFormat": "{{action}}" }]
+    },
+    {
+      "id": 3,
+      "title": "Audit Events by Decision",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 0 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (decision) (rate(mcp_audit_events_total[5m]))", "legendFormat": "{{decision}}" }]
+    },
+    {
+      "id": 4,
+      "title": "SIEM Export Success/Failure Count",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (mode, status) (rate(mcp_siem_export_total[5m]))", "legendFormat": "{{mode}} {{status}}" }]
+    },
+    {
+      "id": 5,
+      "title": "SIEM Export Latency",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(mcp_siem_export_duration_seconds_bucket[5m])) by (mode, le))", "legendFormat": "{{mode}} p95" }]
+    },
+    {
+      "id": 6,
+      "title": "Last Exported Audit Timestamp",
+      "type": "stat",
+      "gridPos": { "h": 7, "w": 4, "x": 16, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "max by (mode) (mcp_siem_last_export_timestamp_seconds)", "legendFormat": "{{mode}}" }]
+    },
+    {
+      "id": 7,
+      "title": "Failed SIEM Export Records",
+      "type": "stat",
+      "gridPos": { "h": 7, "w": 4, "x": 20, "y": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "expr": "sum by (mode) (increase(mcp_siem_failed_records_total[1h]))", "legendFormat": "{{mode}}" }]
+    }
+  ]
+}

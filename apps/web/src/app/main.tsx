@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Activity, BookOpen, CheckCircle2, FileCode2, KeyRound, Play, ShieldCheck } from "lucide-react";
+import { Activity, BookOpen, CheckCircle2, FileCode2, KeyRound, Play, ShieldCheck, Workflow } from "lucide-react";
 import { api, getDevToken } from "../lib/api";
 import { Badge } from "../components/Badge";
 import "./styles.css";
 
-type Tab = "connectors" | "skills" | "tasks" | "access" | "audit" | "templates";
+type Tab = "connectors" | "jira" | "templates" | "access" | "skills" | "tasks" | "audit";
 
 function statusTone(status: string) {
   if (status === "approved") return "good";
@@ -38,31 +38,51 @@ function App() {
 
   const nav = useMemo(() => [
     ["connectors", BookOpen, "Connector Catalog"],
+    ["jira", Workflow, "Jira Connector Example"],
+    ["templates", FileCode2, "Connector Template Gallery"],
+    ["access", KeyRound, "Project Access Requests"],
     ["skills", ShieldCheck, "Skill Catalog"],
     ["tasks", Play, "Task Catalog"],
-    ["access", KeyRound, "Project Access"],
-    ["audit", Activity, "Audit Log"],
-    ["templates", FileCode2, "Templates"]
+    ["audit", Activity, "Audit Log"]
   ] as const, []);
 
-  async function invokeSearch() {
-    setMessage("Invoking local knowledge base...");
-    const result = await api("/gateway/connectors/local-knowledge-base/tools/search_items/invoke", token, {
-      method: "POST",
-      headers: { "x-project-id": "platform-internal" },
-      body: JSON.stringify({ query: "runbook" })
-    });
-    setMessage(JSON.stringify(result, null, 2));
+  async function invokeJiraSearch() {
+    setMessage("Invoking Jira search through the MCP Gateway...");
+    try {
+      const result = await api("/gateway/connectors/jira/tools/jira.search_issues/invoke", token, {
+        method: "POST",
+        body: JSON.stringify({
+          projectId: "ai-platform-demo",
+          input: {
+            jql: "project = DEMO ORDER BY created DESC",
+            maxResults: 10
+          }
+        })
+      });
+      setMessage(JSON.stringify(result, null, 2));
+    } catch (error: any) {
+      setMessage(error.message);
+    }
   }
 
-  async function executeTask() {
-    setMessage("Executing task...");
-    const result = await api("/gateway/tasks/search-runbook-and-draft-response/execute", token, {
-      method: "POST",
-      headers: { "x-project-id": "platform-internal" },
-      body: JSON.stringify({ query: "database failover" })
-    });
-    setMessage(JSON.stringify(result, null, 2));
+  async function invokeDeniedJiraWrite() {
+    setMessage("Invoking Jira write action to demonstrate policy denial...");
+    try {
+      const result = await api("/gateway/connectors/jira/tools/jira.create_issue/invoke", token, {
+        method: "POST",
+        body: JSON.stringify({
+          projectId: "ai-platform-demo",
+          input: {
+            projectKey: "DEMO",
+            summary: "Bug from incident",
+            description: "Created through governed MCP Gateway"
+          }
+        })
+      });
+      setMessage(JSON.stringify(result, null, 2));
+    } catch (error: any) {
+      setMessage(error.message);
+    }
   }
 
   async function loadAudit() {
@@ -111,12 +131,12 @@ function App() {
       <section>
         <header>
           <div>
-            <p className="eyebrow">Governed MCP connectors, skills, and tasks</p>
+            <p className="eyebrow">Template-first MCP connector onboarding</p>
             <h1>{nav.find(([id]) => id === tab)?.[2]}</h1>
           </div>
           <div className="actions">
-            <button onClick={invokeSearch}><Play size={16} /> Invoke KB Tool</button>
-            <button onClick={executeTask}><Play size={16} /> Execute Task</button>
+            <button onClick={invokeJiraSearch}><Play size={16} /> Invoke Jira Search</button>
+            <button onClick={invokeDeniedJiraWrite}><ShieldCheck size={16} /> Demo Denied Write</button>
           </div>
         </header>
 
@@ -138,9 +158,31 @@ function App() {
 
         {tab === "access" && (
           <div className="panel">
-            <h2>Platform Internal Project</h2>
-            <p>Seeded access approvals let project developers invoke the Local Knowledge Base connector and execute the runbook search task.</p>
-            <button onClick={invokeSearch}><Play size={16} /> Verify connector access</button>
+            <h2>AI Platform Demo Project</h2>
+            <p>Seeded access approvals let project developers invoke approved Jira read tools through the gateway. Write tools remain blocked until an approval workflow allows them.</p>
+            <button onClick={invokeJiraSearch}><Play size={16} /> Verify Jira access</button>
+          </div>
+        )}
+
+        {tab === "jira" && (
+          <div className="panel">
+            <h2>Jira Connector Example</h2>
+            <p>The Jira connector runs in mock mode without credentials and exposes search, read, create, comment, and transition tools. Agents call the MCP Gateway; the gateway enforces auth, RBAC, project access, policy, and audit before calling Jira.</p>
+            <div className="snippet">
+              <strong>Sample gateway invocation</strong>
+              <pre>{`POST /gateway/connectors/jira/tools/jira.search_issues/invoke
+{
+  "projectId": "ai-platform-demo",
+  "input": {
+    "jql": "project = DEMO ORDER BY created DESC",
+    "maxResults": 10
+  }
+}`}</pre>
+            </div>
+            <div className="actions inline">
+              <button onClick={invokeJiraSearch}><Play size={16} /> Run search</button>
+              <button onClick={invokeDeniedJiraWrite}><ShieldCheck size={16} /> Test write policy</button>
+            </div>
           </div>
         )}
 
@@ -164,6 +206,7 @@ function App() {
                 <strong>{template.id}</strong>
                 <span>{template.description}</span>
                 <Badge>{template.type}</Badge>
+                {template.type === "connector" && <small>npm run create:connector -- --name team-connector --template {template.id}</small>}
               </button>
             ))}
           </div>

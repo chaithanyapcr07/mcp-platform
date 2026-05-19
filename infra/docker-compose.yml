@@ -24,6 +24,21 @@ services:
     ports:
       - "4100:4100"
 
+  jira:
+    build:
+      context: ..
+      dockerfile: connectors/jira/Dockerfile
+    environment:
+      JIRA_AUTH_MODE: mock
+      JIRA_CONNECTOR_PORT: 4200
+      TRACING_ENABLED: "true"
+      OTEL_SERVICE_NAME: mcp-jira-connector
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    ports:
+      - "4200:4200"
+    depends_on:
+      - otel-collector
+
   api:
     build:
       context: ..
@@ -32,13 +47,28 @@ services:
       DATABASE_URL: postgresql://mcp:mcp@postgres:5432/mcp_platform?schema=public
       JWT_SECRET: local-dev-secret-change-me
       LOCAL_KB_CONNECTOR_URL: http://local-knowledge-base:4100
+      JIRA_CONNECTOR_URL: http://jira:4200
       API_PORT: 4000
+      TRACING_ENABLED: "true"
+      METRICS_ENABLED: "true"
+      OTEL_SERVICE_NAME: mcp-platform-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      SIEM_EXPORT_MODE: local_jsonl
+      SIEM_EXPORT_PATH: /app/audit-exports/audit-events.jsonl
+      SIEM_EXPORT_BATCH_SIZE: 100
+      SIEM_EXPORT_INTERVAL_SECONDS: 5
     ports:
       - "4000:4000"
+    volumes:
+      - audit-exports:/app/audit-exports
     depends_on:
       postgres:
         condition: service_healthy
       local-knowledge-base:
+        condition: service_started
+      jira:
+        condition: service_started
+      otel-collector:
         condition: service_started
     command: sh -c "npm run db:generate -w @mcp-platform/api && npm run db:deploy -w @mcp-platform/api && npm run db:seed -w @mcp-platform/api && npm run start -w @mcp-platform/api"
 
@@ -53,5 +83,56 @@ services:
     depends_on:
       - api
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+
 volumes:
   postgres-data:
+  audit-exports:
+  prometheus-data:
+  grafana-data:

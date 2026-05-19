@@ -319,7 +319,12 @@ CREATE TABLE "audit_events" (
   "tool_name" TEXT,
   "decision" TEXT NOT NULL,
   "reason" TEXT NOT NULL,
+  "reason_code" TEXT,
   "request_id" TEXT NOT NULL,
+  "trace_id" TEXT,
+  "span_id" TEXT,
+  "risk_level" TEXT,
+  "data_classification" TEXT,
   "metadata" JSONB NOT NULL,
   CONSTRAINT "audit_events_pkey" PRIMARY KEY ("id")
 );

@@ -19,7 +19,7 @@ export class PolicyEvaluator {
     for (const permission of tool.permissions) {
       if (!actor.permissions.includes(permission)) return deny(`Actor lacks tool permission ${permission}`);
     }
-    if (!input.hasProjectConnectorAccess) return deny("Project does not have approved connector access");
+    if (!input.hasProjectConnectorAccess) return deny(`Project does not have access to connector ${connector.id}`);
     if (skill) {
       const decision = this.evaluateSkill(input);
       if (decision.decision !== "allowed") return decision;

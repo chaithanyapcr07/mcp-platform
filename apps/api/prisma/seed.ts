@@ -8,7 +8,6 @@ const prisma = new PrismaClient();
 const enterpriseConnectors = [
   "github-enterprise",
   "gitlab",
-  "jira",
   "confluence",
   "slack",
   "microsoft-teams",
@@ -66,6 +65,11 @@ async function main() {
     update: { writeAccess: false },
     create: { id: "platform-internal", name: "Platform Internal", teamId: "ai-platform", environment: "dev", writeAccess: false }
   });
+  await prisma.project.upsert({
+    where: { id: "ai-platform-demo" },
+    update: { writeAccess: false },
+    create: { id: "ai-platform-demo", name: "AI Platform Demo", teamId: "ai-platform", environment: "dev", writeAccess: false }
+  });
 
   const users = [
     { id: "u-admin", email: "admin@example.com", name: "Platform Admin", role: "platform_admin" },
@@ -88,6 +92,11 @@ async function main() {
       where: { userId_projectId: { userId: user.id, projectId: "platform-internal" } },
       update: {},
       create: { id: nanoid(), userId: user.id, projectId: "platform-internal", role: user.role }
+    });
+    await prisma.projectMembership.upsert({
+      where: { userId_projectId: { userId: user.id, projectId: "ai-platform-demo" } },
+      update: {},
+      create: { id: nanoid(), userId: user.id, projectId: "ai-platform-demo", role: user.role }
     });
   }
 
@@ -123,6 +132,74 @@ async function main() {
       documentationUrl: `https://internal.example.com/mcp/${connectorId}`
     });
   }
+
+  await upsertConnector(prisma, {
+    id: "jira",
+    name: "Jira MCP Connector",
+    description: "Provides governed access to Jira issue search, read, create, comment, and transition operations.",
+    ownerTeam: "ai-platform",
+    businessDomain: "engineering",
+    connectorType: "issue_tracker",
+    version: "0.1.0",
+    status: "approved",
+    runtimeType: "managed",
+    authType: "api_token",
+    requiredScopes: ["read:jira-work", "write:jira-work"],
+    tools: [
+      {
+        name: "jira.search_issues",
+        description: "Search Jira issues using approved JQL patterns.",
+        inputSchema: { type: "object", properties: { jql: { type: "string" }, maxResults: { type: "number" } }, required: ["jql"] },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: false,
+        riskLevel: "low"
+      },
+      {
+        name: "jira.get_issue",
+        description: "Read a Jira issue by key.",
+        inputSchema: { type: "object", properties: { issueKey: { type: "string" } }, required: ["issueKey"] },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: false,
+        riskLevel: "low"
+      },
+      {
+        name: "jira.create_issue",
+        description: "Create a Jira issue in an approved project.",
+        inputSchema: { type: "object", properties: { projectKey: { type: "string" }, summary: { type: "string" }, description: { type: "string" } }, required: ["projectKey", "summary"] },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: true,
+        riskLevel: "high"
+      },
+      {
+        name: "jira.add_comment",
+        description: "Add a comment to an existing Jira issue.",
+        inputSchema: { type: "object", properties: { issueKey: { type: "string" }, comment: { type: "string" } }, required: ["issueKey", "comment"] },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: true,
+        riskLevel: "medium"
+      },
+      {
+        name: "jira.transition_issue",
+        description: "Transition a Jira issue status.",
+        inputSchema: { type: "object", properties: { issueKey: { type: "string" }, transitionName: { type: "string" } }, required: ["issueKey", "transitionName"] },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: true,
+        riskLevel: "high"
+      }
+    ],
+    resources: [{ uri: "jira://issues/{issueKey}", description: "Read-only Jira issue resource.", dataClassification: "confidential" }],
+    prompts: [{ name: "jira_bug_triage_prompt", description: "Prompt template for triaging a bug and preparing Jira issue fields.", arguments: [{ name: "incident", required: true }] }],
+    riskLevel: "high",
+    dataClassification: "confidential",
+    deploymentTarget: "local-docker",
+    sourceRepository: "connectors/jira",
+    documentationUrl: "connectors/jira/README.md"
+  });
 
   await upsertConnector(prisma, {
     id: "local-knowledge-base",
@@ -184,6 +261,20 @@ async function main() {
   });
 
   await prisma.connectorSecret.upsert({
+    where: { id: "jira-secret-ref" },
+    update: {},
+    create: {
+      id: "jira-secret-ref",
+      connectorId: "jira",
+      secretRef: "local/jira/api-token",
+      secretProvider: "local_mock",
+      secretVersion: "v1",
+      allowedRuntimeIdentity: "mcp-gateway-local",
+      rotationStatus: "current"
+    }
+  });
+
+  await prisma.connectorSecret.upsert({
     where: { id: "local-kb-secret-ref" },
     update: {},
     create: {
@@ -195,6 +286,26 @@ async function main() {
       allowedRuntimeIdentity: "mcp-gateway-local",
       rotationStatus: "current"
     }
+  });
+
+  await upsertSkill(prisma, {
+    id: "engineering-ticket-management",
+    name: "Engineering Ticket Management",
+    description: "Governed Jira ticket search, read, create, comment, and transition capability.",
+    ownerTeam: "ai-platform",
+    version: "1.0.0",
+    status: "approved",
+    riskLevel: "high",
+    dataClassification: "confidential",
+    requiredConnectors: ["jira"],
+    allowedTools: ["jira.search_issues", "jira.get_issue", "jira.create_issue", "jira.add_comment", "jira.transition_issue"],
+    allowedResources: ["jira://issues/{issueKey}"],
+    allowedPrompts: ["jira_bug_triage_prompt"],
+    requiredPermissions: ["tool:execute"],
+    approvalRequirements: ["human_approval_for_write_tools"],
+    policyConstraints: ["audit_required", "write_tools_require_human_approval"],
+    evals: ["jira-ticket-management-eval"],
+    examples: ["Search open bugs", "Create a bug ticket from incident context"]
   });
 
   await upsertSkill(prisma, {
@@ -218,7 +329,6 @@ async function main() {
   });
 
   for (const skill of [
-    "engineering-ticket-management",
     "incident-response-assistant",
     "code-review-assistant",
     "cloud-operations-assistant"
@@ -245,6 +355,40 @@ async function main() {
   }
 
   await upsertTask(prisma, {
+    id: "create-jira-ticket-from-incident",
+    name: "Create Jira Ticket From Incident",
+    description: "Create a Jira bug from normalized incident context through the governed engineering ticket management skill.",
+    ownerTeam: "ai-platform",
+    version: "1.0.0",
+    status: "approved",
+    requiredSkills: ["engineering-ticket-management"],
+    inputSchema: { type: "object", properties: { projectKey: { type: "string" }, summary: { type: "string" }, description: { type: "string" } }, required: ["projectKey", "summary"] },
+    outputSchema: { type: "object" },
+    executionConstraints: { maxSteps: 3, timeoutSeconds: 30 },
+    approvalBehavior: "required",
+    policyConstraints: ["write_tools_require_human_approval"],
+    auditRequirements: ["tool_invocations", "task_steps", "approval_decision"],
+    testCases: [{ input: { projectKey: "DEMO", summary: "Checkout bug" }, expect: "requires_approval" }]
+  });
+
+  await upsertTask(prisma, {
+    id: "summarize-open-bugs",
+    name: "Summarize Open Bugs",
+    description: "Search Jira for open bugs and summarize current engineering risk.",
+    ownerTeam: "ai-platform",
+    version: "0.1.0",
+    status: "approved",
+    requiredSkills: ["engineering-ticket-management"],
+    inputSchema: { type: "object", properties: { jql: { type: "string" }, maxResults: { type: "number" } }, required: ["jql"] },
+    outputSchema: { type: "object" },
+    executionConstraints: { maxSteps: 2, timeoutSeconds: 30 },
+    approvalBehavior: "none",
+    policyConstraints: ["read_only"],
+    auditRequirements: ["tool_invocations", "task_steps"],
+    testCases: [{ input: { jql: "project = DEMO AND issuetype = Bug ORDER BY created DESC" }, expect: "issues" }]
+  });
+
+  await upsertTask(prisma, {
     id: "search-runbook-and-draft-response",
     name: "Search Runbook And Draft Response",
     description: "Search the knowledge base and draft an incident response summary.",
@@ -262,7 +406,6 @@ async function main() {
   });
 
   for (const task of [
-    "create-jira-ticket-from-incident",
     "summarize-pr-risk",
     "summarize-open-incidents",
     "prepare-deployment-risk-summary"
@@ -284,6 +427,27 @@ async function main() {
       testCases: []
     });
   }
+
+  await prisma.connectorAccessRequest.upsert({
+    where: { projectId_connectorId: { projectId: "ai-platform-demo", connectorId: "jira" } },
+    update: { status: "approved", accessLevel: "restricted" },
+    create: { id: nanoid(), projectId: "ai-platform-demo", connectorId: "jira", status: "approved", requestedBy: "u-admin", approvedBy: "u-admin", accessLevel: "restricted" }
+  });
+  await prisma.skillAccessRequest.upsert({
+    where: { projectId_skillId: { projectId: "ai-platform-demo", skillId: "engineering-ticket-management" } },
+    update: { status: "approved" },
+    create: { id: nanoid(), projectId: "ai-platform-demo", skillId: "engineering-ticket-management", status: "approved", requestedBy: "u-admin", approvedBy: "u-admin" }
+  });
+  await prisma.taskAccessRequest.upsert({
+    where: { projectId_taskId: { projectId: "ai-platform-demo", taskId: "create-jira-ticket-from-incident" } },
+    update: { status: "approved" },
+    create: { id: nanoid(), projectId: "ai-platform-demo", taskId: "create-jira-ticket-from-incident", status: "approved", requestedBy: "u-admin", approvedBy: "u-admin" }
+  });
+  await prisma.taskAccessRequest.upsert({
+    where: { projectId_taskId: { projectId: "ai-platform-demo", taskId: "summarize-open-bugs" } },
+    update: { status: "approved" },
+    create: { id: nanoid(), projectId: "ai-platform-demo", taskId: "summarize-open-bugs", status: "approved", requestedBy: "u-admin", approvedBy: "u-admin" }
+  });
 
   await prisma.connectorAccessRequest.upsert({
     where: { projectId_connectorId: { projectId: "platform-internal", connectorId: "local-knowledge-base" } },
