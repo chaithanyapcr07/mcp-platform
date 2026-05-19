@@ -1,0 +1,16 @@
+id: search-runbook-and-draft-response
+name: Search Runbook And Draft Response
+description: Searches the approved knowledge base and drafts an incident response.
+owner_team: ai-platform
+version: 1.0.0
+status: approved
+required_skills: [knowledge-base-search]
+input_schema: { type: object, required: [query] }
+output_schema: { type: object, required: [result, draftResponse] }
+execution_constraints: { timeout_seconds: 30, max_steps: 3 }
+approval_behavior: none
+policy_constraints: [read_only]
+audit_requirements: [task_execution, tool_invocations]
+test_cases:
+  - input: { query: database failover }
+    expect: runbook

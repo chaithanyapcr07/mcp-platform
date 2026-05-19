@@ -1,0 +1,10 @@
+workflows:
+  - id: connector-production-review
+    reviewers: [platform_admin, security_reviewer]
+    applies_to: [connector]
+  - id: skill-production-review
+    reviewers: [security_reviewer, skill_owner]
+    applies_to: [skill]
+  - id: task-execution-approval
+    reviewers: [task_owner, security_reviewer]
+    applies_to: [task_execution]

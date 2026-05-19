@@ -1,0 +1,14 @@
+id: cloud-operations-assistant
+name: Cloud Operations Assistant
+description: Governed cloud and Kubernetes operational inspection capability.
+owner_team: ai-platform
+version: 0.1.0
+status: draft
+risk_level: critical
+data_classification: restricted
+required_connectors: [kubernetes, argocd, datadog]
+allowed_tools: [kubernetes.list_pods, argocd.get_application_health, datadog.query_metrics]
+required_permissions: [skill:execute, tool:execute]
+approval_requirements: [security_review, platform_admin_review]
+policy_constraints: [restricted_data_project_approval, no_write_by_default]
+evals: [ops-answer-correctness, restricted-data-policy]

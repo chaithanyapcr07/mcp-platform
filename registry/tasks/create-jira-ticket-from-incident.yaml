@@ -1,0 +1,14 @@
+id: create-jira-ticket-from-incident
+name: Create Jira Ticket From Incident
+description: Creates a Jira bug ticket from normalized incident context.
+owner_team: ai-platform
+version: 0.1.0
+status: draft
+required_skills: [engineering-ticket-management, incident-response-assistant]
+input_schema: { type: object, required: [incident_id] }
+output_schema: { type: object, required: [ticket_id] }
+execution_constraints: { timeout_seconds: 60, max_steps: 5 }
+approval_behavior: required
+policy_constraints: [write_tools_require_approval]
+audit_requirements: [task_execution, tool_invocations]
+test_cases: []

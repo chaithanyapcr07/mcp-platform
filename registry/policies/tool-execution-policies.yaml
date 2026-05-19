@@ -1,0 +1,7 @@
+policies:
+  - id: tool-level-permission-required
+    effect: deny
+    condition: missing required tool permission
+  - id: write-tools-require-approval
+    effect: require_approval
+    condition: tool.write == true and project.write_access != true

@@ -1,0 +1,14 @@
+id: summarize-pr-risk
+name: Summarize PR Risk
+description: Summarizes pull request delivery, ownership, and rollback risks.
+owner_team: ai-platform
+version: 0.1.0
+status: draft
+required_skills: [code-review-assistant]
+input_schema: { type: object, required: [repository, pull_request] }
+output_schema: { type: object, required: [summary, risks] }
+execution_constraints: { timeout_seconds: 45, max_steps: 4 }
+approval_behavior: none
+policy_constraints: [read_only]
+audit_requirements: [task_execution]
+test_cases: []

@@ -1,0 +1,14 @@
+id: summarize-open-incidents
+name: Summarize Open Incidents
+description: Summarizes active incidents from incident and observability systems.
+owner_team: ai-platform
+version: 0.1.0
+status: draft
+required_skills: [incident-response-assistant]
+input_schema: { type: object }
+output_schema: { type: object }
+execution_constraints: { timeout_seconds: 60, max_steps: 6 }
+approval_behavior: request
+policy_constraints: [incident_data_controls]
+audit_requirements: [task_execution, tool_invocations]
+test_cases: []

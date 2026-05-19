@@ -1,0 +1,14 @@
+id: looker
+name: Looker
+description: Stub MCP connector metadata for Looker dashboards and explores.
+owner_team: ai-platform
+business_domain: analytics
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: oauth2
+required_scopes: [read]
+risk_level: medium
+data_classification: confidential
+tools: [{ name: search_dashboards, write: false }]

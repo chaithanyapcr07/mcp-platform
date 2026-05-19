@@ -1,0 +1,14 @@
+id: argocd
+name: Argo CD
+description: Stub MCP connector metadata for Argo CD applications and sync status.
+owner_team: ai-platform
+business_domain: deployment
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: service_account
+required_scopes: [applications.read]
+risk_level: high
+data_classification: internal
+tools: [{ name: get_application_health, write: false }, { name: sync_application, write: true }]

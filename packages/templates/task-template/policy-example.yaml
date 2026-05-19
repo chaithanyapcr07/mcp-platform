@@ -1,0 +1,4 @@
+policies:
+  - id: task-template-policy
+    effect: deny
+    condition: task.status != approved

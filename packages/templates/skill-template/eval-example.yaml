@@ -1,0 +1,5 @@
+id: skill-template-eval
+checks:
+  - name: basic-correctness
+    input: {}
+    expected_contains: success

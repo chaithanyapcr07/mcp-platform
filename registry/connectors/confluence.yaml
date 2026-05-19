@@ -1,0 +1,14 @@
+id: confluence
+name: Confluence
+description: Stub MCP connector metadata for Confluence spaces and pages.
+owner_team: ai-platform
+business_domain: knowledge
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: oauth2
+required_scopes: [read:confluence-content.all]
+risk_level: medium
+data_classification: confidential
+tools: [{ name: search_pages, write: false }]

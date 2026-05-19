@@ -1,0 +1,7 @@
+policies:
+  - id: approved-tasks-only
+    effect: deny
+    condition: task.status != approved
+  - id: critical-tasks-require-approval
+    effect: require_approval
+    condition: task.risk_level == critical

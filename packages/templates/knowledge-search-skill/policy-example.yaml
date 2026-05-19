@@ -1,0 +1,4 @@
+policies:
+  - id: knowledge-search-skill-policy
+    effect: deny
+    condition: skill.status != approved

@@ -1,0 +1,14 @@
+id: jira
+name: Jira
+description: Stub MCP connector metadata for Jira issue search and ticket updates.
+owner_team: ai-platform
+business_domain: engineering
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: oauth2
+required_scopes: [read:jira-work, write:jira-work]
+risk_level: medium
+data_classification: confidential
+tools: [{ name: search_issues, write: false }, { name: create_issue, write: true }]

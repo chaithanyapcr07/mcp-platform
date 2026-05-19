@@ -1,0 +1,4 @@
+policies:
+  - id: knowledge-retrieval-task-policy
+    effect: deny
+    condition: task.status != approved

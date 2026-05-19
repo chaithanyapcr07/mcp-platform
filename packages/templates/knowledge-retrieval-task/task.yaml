@@ -1,0 +1,14 @@
+id: knowledge-retrieval-task
+name: knowledge-retrieval-task
+description: Generated task template.
+owner_team: owning-team
+version: 0.1.0
+status: draft
+required_skills: []
+input_schema: { type: object }
+output_schema: { type: object }
+execution_constraints: { timeout_seconds: 60, max_steps: 5 }
+approval_behavior: request
+policy_constraints: [audit_required]
+audit_requirements: [task_execution, tool_invocations]
+test_cases: []

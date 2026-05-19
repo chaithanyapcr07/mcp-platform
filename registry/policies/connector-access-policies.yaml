@@ -1,0 +1,7 @@
+policies:
+  - id: approved-connectors-only
+    effect: deny
+    condition: connector.status != approved
+  - id: restricted-connectors-require-project-approval
+    effect: deny
+    condition: connector.data_classification == restricted and project.access != restricted

@@ -1,0 +1,4 @@
+policies:
+  - id: read-only-enterprise-skill-policy
+    effect: deny
+    condition: skill.status != approved

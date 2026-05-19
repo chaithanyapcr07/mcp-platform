@@ -1,0 +1,5 @@
+id: developer-productivity-skill-eval
+checks:
+  - name: basic-correctness
+    input: {}
+    expected_contains: success

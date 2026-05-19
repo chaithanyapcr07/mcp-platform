@@ -1,0 +1,6 @@
+id: search-runbook-and-draft-response-eval
+target: search-runbook-and-draft-response
+checks:
+  - name: drafts-from-runbook-context
+    input: { query: database failover }
+    expected_contains: Draft response

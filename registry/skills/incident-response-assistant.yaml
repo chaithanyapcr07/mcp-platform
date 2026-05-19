@@ -1,0 +1,14 @@
+id: incident-response-assistant
+name: Incident Response Assistant
+description: Composes incident, observability, and knowledge connectors for response workflows.
+owner_team: ai-platform
+version: 0.1.0
+status: draft
+risk_level: high
+data_classification: confidential
+required_connectors: [pagerduty, datadog, servicenow, local-knowledge-base]
+allowed_tools: [pagerduty.list_incidents, datadog.query_metrics, servicenow.search_incidents, local-knowledge-base.search_items]
+required_permissions: [skill:execute, tool:execute]
+approval_requirements: [security_review, incident_commander_review]
+policy_constraints: [high_risk_requires_human_approval]
+evals: [incident-summary-correctness, policy-compliance]

@@ -1,0 +1,4 @@
+policies:
+  - id: developer-productivity-skill-policy
+    effect: deny
+    condition: skill.status != approved

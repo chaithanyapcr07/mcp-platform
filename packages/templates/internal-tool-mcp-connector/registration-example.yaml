@@ -1,0 +1,4 @@
+connector_id: internal-tool-mcp-connector
+project_id: platform-internal
+requested_access: read
+reviewers: [platform_admin, security_reviewer]

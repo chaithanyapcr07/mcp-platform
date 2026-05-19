@@ -1,0 +1,17 @@
+id: knowledge-base-search
+name: Knowledge Base Search
+description: Approved read-only skill over internal knowledge articles.
+owner_team: ai-platform
+version: 1.0.0
+status: approved
+risk_level: low
+data_classification: internal
+required_connectors: [local-knowledge-base]
+allowed_tools: [local-knowledge-base.search_items, local-knowledge-base.get_item]
+allowed_resources: [kb://articles/{id}]
+allowed_prompts: [summarize_article_prompt]
+required_permissions: [kb:read]
+approval_requirements: []
+policy_constraints: [read_only, audit_required]
+evals: [kb-search-relevance]
+examples: [Find a runbook for database failover]

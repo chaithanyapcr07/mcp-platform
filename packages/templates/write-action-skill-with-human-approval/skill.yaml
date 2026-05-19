@@ -1,0 +1,17 @@
+id: write-action-skill-with-human-approval
+name: write-action-skill-with-human-approval
+description: Generated skill template.
+owner_team: owning-team
+version: 0.1.0
+status: draft
+risk_level: low
+data_classification: internal
+required_connectors: []
+allowed_tools: []
+allowed_resources: []
+allowed_prompts: []
+required_permissions: [skill:execute]
+approval_requirements: []
+policy_constraints: [audit_required]
+evals: [basic-correctness]
+examples: []

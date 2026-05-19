@@ -1,0 +1,6 @@
+id: kb-search-relevance
+target: knowledge-base-search
+checks:
+  - name: returns-relevant-runbook
+    input: { query: database failover }
+    expected_contains: Database Failover Runbook

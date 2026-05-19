@@ -1,0 +1,5 @@
+id: write-action-skill-with-human-approval-eval
+checks:
+  - name: basic-correctness
+    input: {}
+    expected_contains: success

@@ -1,0 +1,14 @@
+id: code-review-assistant
+name: Code Review Assistant
+description: Summarizes repository changes and review risks through code hosting connectors.
+owner_team: ai-platform
+version: 0.1.0
+status: draft
+risk_level: medium
+data_classification: confidential
+required_connectors: [github-enterprise, gitlab]
+allowed_tools: [github-enterprise.search, gitlab.search]
+required_permissions: [skill:execute, tool:execute]
+approval_requirements: [platform_review]
+policy_constraints: [read_only]
+evals: [review-risk-precision]

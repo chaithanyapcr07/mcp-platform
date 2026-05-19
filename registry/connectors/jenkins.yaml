@@ -1,0 +1,14 @@
+id: jenkins
+name: Jenkins
+description: Stub MCP connector metadata for Jenkins jobs and build status.
+owner_team: ai-platform
+business_domain: ci-cd
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: api_key
+required_scopes: [job.read]
+risk_level: medium
+data_classification: internal
+tools: [{ name: get_build_status, write: false }]

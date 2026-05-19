@@ -1,0 +1,14 @@
+id: gcs
+name: GCS
+description: Stub MCP connector metadata for Google Cloud Storage object retrieval.
+owner_team: ai-platform
+business_domain: storage
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: workload_identity
+required_scopes: [storage.objects.get]
+risk_level: high
+data_classification: restricted
+tools: [{ name: get_object_metadata, write: false }]

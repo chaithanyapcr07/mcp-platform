@@ -1,0 +1,14 @@
+id: kubernetes
+name: Kubernetes
+description: Stub MCP connector metadata for Kubernetes workload and cluster inspection.
+owner_team: ai-platform
+business_domain: platform-operations
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: managed
+auth_type: workload_identity
+required_scopes: [read]
+risk_level: critical
+data_classification: confidential
+tools: [{ name: list_pods, write: false }, { name: rollout_restart, write: true }]

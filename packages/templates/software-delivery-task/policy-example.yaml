@@ -1,0 +1,4 @@
+policies:
+  - id: software-delivery-task-policy
+    effect: deny
+    condition: task.status != approved

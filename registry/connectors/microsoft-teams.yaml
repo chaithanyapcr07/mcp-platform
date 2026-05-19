@@ -1,0 +1,14 @@
+id: microsoft-teams
+name: Microsoft Teams
+description: Stub MCP connector metadata for Teams channels, chats, and messages.
+owner_team: ai-platform
+business_domain: collaboration
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: oauth2
+required_scopes: [ChannelMessage.Read.All]
+risk_level: medium
+data_classification: confidential
+tools: [{ name: search_messages, write: false }]

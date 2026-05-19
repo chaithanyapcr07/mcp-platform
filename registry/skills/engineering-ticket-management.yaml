@@ -1,0 +1,14 @@
+id: engineering-ticket-management
+name: Engineering Ticket Management
+description: Governed Jira ticket search, creation, and status management capability.
+owner_team: ai-platform
+version: 0.1.0
+status: draft
+risk_level: medium
+data_classification: confidential
+required_connectors: [jira]
+allowed_tools: [jira.search_issues, jira.get_issue, jira.create_issue, jira.update_issue_status]
+required_permissions: [skill:execute, tool:execute]
+approval_requirements: [security_review]
+policy_constraints: [write_tools_require_approval]
+evals: [ticket-quality, no-sensitive-data-leakage]

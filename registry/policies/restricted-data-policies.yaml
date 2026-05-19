@@ -1,0 +1,4 @@
+policies:
+  - id: restricted-data-explicit-approval
+    effect: deny
+    condition: data_classification == restricted and no explicit project approval exists

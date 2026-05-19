@@ -1,0 +1,4 @@
+policies:
+  - id: skill-template-policy
+    effect: deny
+    condition: skill.status != approved

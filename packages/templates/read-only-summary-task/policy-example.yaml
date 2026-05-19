@@ -1,0 +1,4 @@
+policies:
+  - id: read-only-summary-task-policy
+    effect: deny
+    condition: task.status != approved

@@ -1,0 +1,14 @@
+id: prepare-deployment-risk-summary
+name: Prepare Deployment Risk Summary
+description: Combines CI/CD, deployment, observability, and incident context into a deployment risk summary.
+owner_team: ai-platform
+version: 0.1.0
+status: draft
+required_skills: [cloud-operations-assistant, code-review-assistant]
+input_schema: { type: object, required: [service, environment] }
+output_schema: { type: object, required: [risk_level, summary] }
+execution_constraints: { timeout_seconds: 90, max_steps: 8 }
+approval_behavior: request
+policy_constraints: [read_only_unless_approved]
+audit_requirements: [task_execution, tool_invocations]
+test_cases: []

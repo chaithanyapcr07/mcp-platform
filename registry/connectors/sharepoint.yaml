@@ -1,0 +1,14 @@
+id: sharepoint
+name: SharePoint
+description: Stub MCP connector metadata for SharePoint sites, documents, and lists.
+owner_team: ai-platform
+business_domain: documents
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: oauth2
+required_scopes: [Sites.Read.All]
+risk_level: medium
+data_classification: confidential
+tools: [{ name: search_documents, write: false }]

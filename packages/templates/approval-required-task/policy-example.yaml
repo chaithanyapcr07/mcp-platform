@@ -1,0 +1,4 @@
+policies:
+  - id: approval-required-task-policy
+    effect: deny
+    condition: task.status != approved

@@ -1,0 +1,14 @@
+id: azure-blob-storage
+name: Azure Blob Storage
+description: Stub MCP connector metadata for Azure Blob Storage object retrieval.
+owner_team: ai-platform
+business_domain: storage
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: workload_identity
+required_scopes: [blob.read]
+risk_level: high
+data_classification: restricted
+tools: [{ name: get_blob_metadata, write: false }]

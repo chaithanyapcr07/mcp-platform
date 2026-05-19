@@ -1,0 +1,14 @@
+id: bigquery
+name: BigQuery
+description: Stub MCP connector metadata for read-only BigQuery analytics queries.
+owner_team: ai-platform
+business_domain: data
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: workload_identity
+required_scopes: [bigquery.readonly]
+risk_level: high
+data_classification: restricted
+tools: [{ name: run_readonly_query, write: false }]

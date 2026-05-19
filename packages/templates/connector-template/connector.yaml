@@ -1,0 +1,21 @@
+id: connector-template
+name: connector-template
+description: Generated connector template.
+owner_team: owning-team
+business_domain: domain
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: custom
+auth_type: service_account
+required_scopes: [read]
+risk_level: low
+data_classification: internal
+tools:
+  - name: example_read
+    description: Example read tool
+    write: false
+resources:
+  - uri: example://resources/{id}
+prompts:
+  - name: example_prompt

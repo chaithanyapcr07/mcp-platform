@@ -1,0 +1,14 @@
+id: gitlab
+name: GitLab
+description: Stub MCP connector metadata for GitLab projects, merge requests, issues, and pipelines.
+owner_team: ai-platform
+business_domain: software-delivery
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: oauth2
+required_scopes: [read_api]
+risk_level: medium
+data_classification: confidential
+tools: [{ name: search, write: false }]

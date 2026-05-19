@@ -1,0 +1,4 @@
+policies:
+  - id: write-action-skill-with-human-approval-policy
+    effect: deny
+    condition: skill.status != approved

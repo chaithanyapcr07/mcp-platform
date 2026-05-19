@@ -1,0 +1,29 @@
+id: local-knowledge-base
+name: Local Knowledge Base
+description: Safe local MCP connector for searchable internal knowledge articles.
+owner_team: ai-platform
+business_domain: engineering
+connector_type: knowledge_base
+version: 1.0.0
+status: approved
+runtime_type: managed
+auth_type: none
+required_scopes: []
+risk_level: low
+data_classification: internal
+deployment_target: local-docker
+resources:
+  - uri: kb://articles/{id}
+    description: Knowledge base article by id
+prompts:
+  - name: summarize_article_prompt
+    description: Summarize an article for incident response
+tools:
+  - name: search_items
+    write: false
+  - name: get_item
+    write: false
+  - name: create_item
+    write: true
+  - name: list_projects
+    write: false

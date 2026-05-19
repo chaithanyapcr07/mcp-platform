@@ -1,0 +1,442 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id
+  email           String           @unique
+  name            String
+  status          String           @default("active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  memberships     ProjectMembership[]
+  roleAssignments RoleAssignment[]
+  auditEvents     AuditEvent[]
+
+  @@map("users")
+}
+
+model Team {
+  id          String    @id
+  name        String
+  description String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  projects    Project[]
+
+  @@map("teams")
+}
+
+model Project {
+  id                   String                   @id
+  name                 String
+  teamId               String                   @map("team_id")
+  environment          String                   @default("dev")
+  writeAccess          Boolean                  @default(false) @map("write_access")
+  createdAt            DateTime                 @default(now()) @map("created_at")
+  team                 Team                     @relation(fields: [teamId], references: [id])
+  memberships          ProjectMembership[]
+  connectorRequests    ConnectorAccessRequest[]
+  skillRequests        SkillAccessRequest[]
+  taskRequests         TaskAccessRequest[]
+
+  @@map("projects")
+}
+
+model ProjectMembership {
+  id        String   @id
+  userId    String   @map("user_id")
+  projectId String   @map("project_id")
+  role      String
+  user      User     @relation(fields: [userId], references: [id])
+  project   Project  @relation(fields: [projectId], references: [id])
+
+  @@unique([userId, projectId])
+  @@map("project_memberships")
+}
+
+model Role {
+  id              String           @id
+  name            String           @unique
+  description     String?
+  permissions     RolePermission[]
+  assignments     RoleAssignment[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String           @id
+  name        String           @unique
+  description String?
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  role         Role       @relation(fields: [roleId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id])
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model RoleAssignment {
+  id           String  @id
+  userId       String  @map("user_id")
+  roleId       String  @map("role_id")
+  teamId       String? @map("team_id")
+  projectId    String? @map("project_id")
+  resourceType String? @map("resource_type")
+  resourceId   String? @map("resource_id")
+  user         User    @relation(fields: [userId], references: [id])
+  role         Role    @relation(fields: [roleId], references: [id])
+
+  @@map("role_assignments")
+}
+
+model Connector {
+  id                 String              @id
+  name               String
+  description        String
+  ownerTeam          String              @map("owner_team")
+  businessDomain     String              @map("business_domain")
+  connectorType      String              @map("connector_type")
+  version            String
+  status             String
+  runtimeType        String              @map("runtime_type")
+  authType           String              @map("auth_type")
+  requiredScopes     String[]            @map("required_scopes")
+  riskLevel          String              @map("risk_level")
+  dataClassification String              @map("data_classification")
+  deploymentTarget   String?             @map("deployment_target")
+  sourceRepository   String?             @map("source_repository")
+  documentationUrl   String?             @map("documentation_url")
+  createdAt          DateTime            @default(now()) @map("created_at")
+  updatedAt          DateTime            @updatedAt @map("updated_at")
+  tools              ConnectorTool[]
+  resources          ConnectorResource[]
+  prompts            ConnectorPrompt[]
+  secrets            ConnectorSecret[]
+  accessRequests     ConnectorAccessRequest[]
+
+  @@map("connectors")
+}
+
+model ConnectorTool {
+  id          String    @id
+  connectorId String    @map("connector_id")
+  name        String
+  description String
+  inputSchema Json      @map("input_schema")
+  outputSchema Json     @map("output_schema")
+  permissions String[]
+  write       Boolean   @default(false)
+  riskLevel   String    @map("risk_level")
+  connector   Connector @relation(fields: [connectorId], references: [id])
+
+  @@unique([connectorId, name])
+  @@map("connector_tools")
+}
+
+model ConnectorResource {
+  id                 String    @id
+  connectorId         String    @map("connector_id")
+  uri                String
+  description        String
+  dataClassification String    @map("data_classification")
+  connector          Connector @relation(fields: [connectorId], references: [id])
+
+  @@map("connector_resources")
+}
+
+model ConnectorPrompt {
+  id          String    @id
+  connectorId String    @map("connector_id")
+  name        String
+  description String
+  arguments   Json
+  connector   Connector @relation(fields: [connectorId], references: [id])
+
+  @@map("connector_prompts")
+}
+
+model ConnectorSecret {
+  id                     String    @id
+  connectorId             String    @map("connector_id")
+  secretRef              String    @map("secret_ref")
+  secretProvider         String    @map("secret_provider")
+  secretVersion          String    @map("secret_version")
+  allowedRuntimeIdentity String    @map("allowed_runtime_identity")
+  rotationStatus         String    @map("rotation_status")
+  lastRotatedAt          DateTime? @map("last_rotated_at")
+  connector              Connector @relation(fields: [connectorId], references: [id])
+
+  @@map("connector_secrets")
+}
+
+model ConnectorAccessRequest {
+  id          String    @id
+  projectId   String    @map("project_id")
+  connectorId String    @map("connector_id")
+  status      String
+  requestedBy String    @map("requested_by")
+  approvedBy  String?   @map("approved_by")
+  accessLevel String    @default("read") @map("access_level")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  project     Project   @relation(fields: [projectId], references: [id])
+  connector   Connector @relation(fields: [connectorId], references: [id])
+
+  @@unique([projectId, connectorId])
+  @@map("connector_access_requests")
+}
+
+model Skill {
+  id                 String               @id
+  name               String
+  description        String
+  ownerTeam          String               @map("owner_team")
+  version            String
+  status             String
+  riskLevel          String               @map("risk_level")
+  dataClassification String               @map("data_classification")
+  requiredPermissions String[]            @map("required_permissions")
+  approvalRequirements String[]           @map("approval_requirements")
+  policyConstraints  String[]             @map("policy_constraints")
+  examples           String[]
+  createdAt          DateTime             @default(now()) @map("created_at")
+  updatedAt          DateTime             @updatedAt @map("updated_at")
+  connectors         SkillConnector[]
+  tools              SkillTool[]
+  resources          SkillResource[]
+  prompts            SkillPrompt[]
+  evals              SkillEval[]
+  accessRequests     SkillAccessRequest[]
+  taskSkills         TaskSkill[]
+
+  @@map("skills")
+}
+
+model SkillConnector {
+  id          String @id
+  skillId     String @map("skill_id")
+  connectorId String @map("connector_id")
+  skill       Skill  @relation(fields: [skillId], references: [id])
+
+  @@unique([skillId, connectorId])
+  @@map("skill_connectors")
+}
+
+model SkillTool {
+  id       String @id
+  skillId  String @map("skill_id")
+  toolName String @map("tool_name")
+  skill    Skill  @relation(fields: [skillId], references: [id])
+
+  @@map("skill_tools")
+}
+
+model SkillResource {
+  id          String @id
+  skillId     String @map("skill_id")
+  resourceUri String @map("resource_uri")
+  skill       Skill  @relation(fields: [skillId], references: [id])
+
+  @@map("skill_resources")
+}
+
+model SkillPrompt {
+  id         String @id
+  skillId    String @map("skill_id")
+  promptName String @map("prompt_name")
+  skill      Skill  @relation(fields: [skillId], references: [id])
+
+  @@map("skill_prompts")
+}
+
+model SkillEval {
+  id       String @id
+  skillId  String @map("skill_id")
+  name     String
+  criteria Json
+  skill    Skill  @relation(fields: [skillId], references: [id])
+
+  @@map("skill_evals")
+}
+
+model SkillAccessRequest {
+  id          String   @id
+  projectId   String   @map("project_id")
+  skillId     String   @map("skill_id")
+  status      String
+  requestedBy String   @map("requested_by")
+  approvedBy  String?  @map("approved_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  project     Project  @relation(fields: [projectId], references: [id])
+  skill       Skill    @relation(fields: [skillId], references: [id])
+
+  @@unique([projectId, skillId])
+  @@map("skill_access_requests")
+}
+
+model Task {
+  id                  String              @id
+  name                String
+  description         String
+  ownerTeam           String              @map("owner_team")
+  version             String
+  status              String
+  inputSchema         Json                @map("input_schema")
+  outputSchema        Json                @map("output_schema")
+  executionConstraints Json               @map("execution_constraints")
+  approvalBehavior    String              @map("approval_behavior")
+  policyConstraints   String[]            @map("policy_constraints")
+  auditRequirements   String[]            @map("audit_requirements")
+  testCases           Json                @map("test_cases")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+  skills              TaskSkill[]
+  evals               TaskEval[]
+  executions          TaskExecution[]
+  accessRequests      TaskAccessRequest[]
+
+  @@map("tasks")
+}
+
+model TaskSkill {
+  id      String @id
+  taskId  String @map("task_id")
+  skillId String @map("skill_id")
+  task    Task   @relation(fields: [taskId], references: [id])
+  skill   Skill  @relation(fields: [skillId], references: [id])
+
+  @@unique([taskId, skillId])
+  @@map("task_skills")
+}
+
+model TaskEval {
+  id       String @id
+  taskId   String @map("task_id")
+  name     String
+  criteria Json
+  task     Task   @relation(fields: [taskId], references: [id])
+
+  @@map("task_evals")
+}
+
+model TaskAccessRequest {
+  id          String   @id
+  projectId   String   @map("project_id")
+  taskId      String   @map("task_id")
+  status      String
+  requestedBy String   @map("requested_by")
+  approvedBy  String?  @map("approved_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  project     Project  @relation(fields: [projectId], references: [id])
+  task        Task     @relation(fields: [taskId], references: [id])
+
+  @@unique([projectId, taskId])
+  @@map("task_access_requests")
+}
+
+model TaskExecution {
+  id        String              @id
+  taskId    String              @map("task_id")
+  projectId String              @map("project_id")
+  actorId   String              @map("actor_id")
+  status    String
+  input     Json
+  output    Json?
+  startedAt DateTime            @default(now()) @map("started_at")
+  endedAt   DateTime?           @map("ended_at")
+  task      Task                @relation(fields: [taskId], references: [id])
+  steps     TaskExecutionStep[]
+
+  @@map("task_executions")
+}
+
+model TaskExecutionStep {
+  id          String        @id
+  executionId String        @map("execution_id")
+  skillId     String        @map("skill_id")
+  connectorId String?       @map("connector_id")
+  toolName    String?       @map("tool_name")
+  status      String
+  input       Json
+  output      Json?
+  startedAt   DateTime      @default(now()) @map("started_at")
+  endedAt     DateTime?     @map("ended_at")
+  execution   TaskExecution @relation(fields: [executionId], references: [id])
+
+  @@map("task_execution_steps")
+}
+
+model Approval {
+  id           String   @id
+  resourceType String   @map("resource_type")
+  resourceId   String   @map("resource_id")
+  status       String
+  requestedBy  String   @map("requested_by")
+  reviewedBy   String?  @map("reviewed_by")
+  reason       String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("approvals")
+}
+
+model Policy {
+  id          String   @id
+  name        String
+  description String
+  scope       String
+  definition  Json
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("policies")
+}
+
+model AuditEvent {
+  id           String   @id
+  timestamp    DateTime @default(now())
+  actorId      String   @map("actor_id")
+  actorType    String   @map("actor_type")
+  teamId       String?  @map("team_id")
+  projectId    String?  @map("project_id")
+  action       String
+  resourceType String   @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  connectorId  String?  @map("connector_id")
+  skillId      String?  @map("skill_id")
+  taskId       String?  @map("task_id")
+  toolName     String?  @map("tool_name")
+  decision     String
+  reason       String
+  requestId    String   @map("request_id")
+  metadata     Json
+  actor        User     @relation(fields: [actorId], references: [id])
+
+  @@index([requestId])
+  @@index([projectId])
+  @@map("audit_events")
+}
+
+model RateLimit {
+  id           String   @id
+  scope        String
+  scopeId      String   @map("scope_id")
+  limitPerMin  Int      @map("limit_per_min")
+  currentCount Int      @default(0) @map("current_count")
+  resetAt      DateTime @map("reset_at")
+
+  @@unique([scope, scopeId])
+  @@map("rate_limits")
+}

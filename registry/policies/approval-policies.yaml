@@ -1,0 +1,7 @@
+policies:
+  - id: high-risk-approval
+    effect: require_approval
+    condition: risk_level in [high, critical]
+  - id: owners-cannot-self-approve
+    effect: deny
+    condition: actor.team == resource.owner_team and actor lacks security_reviewer

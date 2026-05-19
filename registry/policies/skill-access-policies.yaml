@@ -1,0 +1,7 @@
+policies:
+  - id: approved-skills-only
+    effect: deny
+    condition: skill.status != approved
+  - id: skill-tool-allowlist
+    effect: deny
+    condition: tool not in skill.allowed_tools

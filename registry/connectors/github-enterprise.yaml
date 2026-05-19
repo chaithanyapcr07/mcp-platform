@@ -1,0 +1,14 @@
+id: github-enterprise
+name: GitHub Enterprise
+description: Stub MCP connector metadata for GitHub Enterprise repositories, pull requests, issues, and code search.
+owner_team: ai-platform
+business_domain: software-delivery
+connector_type: mcp_server
+version: 0.1.0
+status: draft
+runtime_type: remote
+auth_type: oauth2
+required_scopes: [repo:read, pull_request:read]
+risk_level: medium
+data_classification: confidential
+tools: [{ name: search, write: false }]
