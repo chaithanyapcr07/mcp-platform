@@ -1,0 +1,19 @@
+requester: service.owner@example.com
+project_id: ai-platform-demo
+team: service-management-platform
+desired_system: servicenow
+requested_tools:
+  - servicenow.search_incidents
+  - servicenow.get_incident
+  - servicenow.create_incident
+  - servicenow.update_incident
+read_or_write_intent: read_write
+business_justification: Build a governed ServiceNow connector for incident-response agents.
+data_classification: confidential
+expected_volume: 500 requests/day
+approval_required: true
+approvers:
+  - security-platform
+  - ai-platform
+status: submitted
+

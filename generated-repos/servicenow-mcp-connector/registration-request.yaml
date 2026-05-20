@@ -1,0 +1,24 @@
+requester: service.owner@example.com
+project_id: ai-platform-demo
+team: service-management-platform
+desired_system: servicenow
+connector_id: servicenow-mcp-connector
+owner_team: service-management-platform
+runtime_owner: service-management-platform
+business_owner: service-management-platform
+security_reviewer: security-platform
+deployment_mode: remote
+data_classification: confidential
+requested_tools:
+  - servicenow.search_incidents
+  - servicenow.get_incident
+  - servicenow.create_incident
+  - servicenow.update_incident
+read_or_write_intent: read_write
+business_justification: Enable approved incident-response agents to work with ServiceNow incidents through MCP Gateway.
+expected_volume: 500 requests/day
+approval_required: true
+approvers:
+  - security-platform
+  - ai-platform
+status: submitted

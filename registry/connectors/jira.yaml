@@ -2,10 +2,25 @@ id: jira
 name: Jira MCP Connector
 description: Provides governed access to Jira issue search, read, create, comment, and transition operations.
 owner_team: ai-platform
+runtime_owner: ai-platform
+business_owner: engineering-platform
+security_reviewer: security-platform
+support_channel: "#ai-platform"
+on_call_rotation: ai-platform-primary
 business_domain: engineering
 connector_type: issue_tracker
 version: 0.1.0
 runtime_type: managed
+deployment_mode: managed
+runtime_url: http://jira:4200
+environment: local
+slo:
+  availability: "99.9"
+  latency_p95_ms: 500
+maintenance:
+  patch_window: Wednesdays 18:00-20:00 local
+  owner_review_interval: quarterly
+deprecation_policy: 90-day notice before disabling production versions
 auth_type: api_token
 risk_level: high
 data_classification: confidential

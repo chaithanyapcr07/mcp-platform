@@ -28,6 +28,9 @@
     "demo:jira-denied-write": "node scripts/demo-jira-denied-write.mjs",
     "demo:audit-events": "node scripts/demo-audit-events.mjs",
     "demo:observability": "node scripts/demo-observability.mjs",
+    "onboard:connector": "node scripts/onboard-connector.mjs",
+    "onboard:access": "node scripts/onboard-access.mjs",
+    "connector:create-repo": "node scripts/create-connector-repo.mjs",
     "lint": "npm run lint --workspaces --if-present"
   },
   "engines": {

@@ -1,0 +1,32 @@
+id: write-action-approval-policy
+name: Write Action Approval Policy
+description: High-risk write tools default to human approval unless explicit automation policy exists.
+default_decision_for_write_tools: approval_required
+rules:
+  - connector_id: jira
+    tool: jira.create_issue
+    decision: approval_required
+    reason_code: HIGH_RISK_WRITE_REQUIRES_APPROVAL
+  - connector_id: jira
+    tool: jira.add_comment
+    decision: approval_required
+    reason_code: WRITE_ACTION_REQUIRES_APPROVAL
+  - connector_id: jira
+    tool: jira.transition_issue
+    decision: approval_required
+    reason_code: HIGH_RISK_WRITE_REQUIRES_APPROVAL
+  - connector_id: servicenow-distributed-example
+    tool: servicenow.create_incident
+    decision: approval_required
+    reason_code: HIGH_RISK_WRITE_REQUIRES_APPROVAL
+  - connector_id: servicenow-distributed-example
+    tool: servicenow.update_incident
+    decision: approval_required
+    reason_code: HIGH_RISK_WRITE_REQUIRES_APPROVAL
+automation_exception_requirements:
+  - explicit_project_scope
+  - named_approver_group
+  - audit_all_calls
+  - rollback_plan
+  - expiration_date
+

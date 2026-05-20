@@ -1,0 +1,15 @@
+requester: developer@example.com
+project_id: ai-platform-demo
+team: incident-response
+connector_id: jira
+requested_tools:
+  - jira.search_issues
+read_or_write_intent: read
+business_justification: Search Jira issues from an incident-response ADK agent through MCP Gateway.
+data_classification: confidential
+expected_volume: 100 requests/day
+approval_required: true
+approvers:
+  - ai-platform
+status: requested
+

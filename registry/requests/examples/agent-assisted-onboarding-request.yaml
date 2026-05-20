@@ -1,0 +1,26 @@
+requester: developer@example.com
+project_id: ai-platform-demo
+team: service-management-platform
+desired_system: servicenow
+requested_tools:
+  - search incidents
+  - get incident
+  - create incident
+  - update incident
+read_or_write_intent: read_write
+business_justification: Incident-response agent needs governed ServiceNow access.
+data_classification: confidential
+expected_volume: 500 requests/day
+approval_required: true
+approvers:
+  - security-platform
+  - ai-platform
+status: draft
+agent_outputs:
+  - requirements.md
+  - design.md
+  - tasks.md
+  - connector.yaml
+  - policy.yaml
+  - registration-request.yaml
+

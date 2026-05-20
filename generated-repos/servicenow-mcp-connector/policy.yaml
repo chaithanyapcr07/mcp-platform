@@ -1,0 +1,13 @@
+id: servicenow-write-action-approval
+description: Generated default policy for ServiceNow write tools.
+connector_id: servicenow-mcp-connector
+defaults:
+  write_tools: approval_required
+  read_tools: project_access_required
+rules:
+  - tool: servicenow.create_incident
+    decision: approval_required
+    reason_code: HIGH_RISK_WRITE_REQUIRES_APPROVAL
+  - tool: servicenow.update_incident
+    decision: approval_required
+    reason_code: HIGH_RISK_WRITE_REQUIRES_APPROVAL

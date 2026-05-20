@@ -1,0 +1,65 @@
+id: servicenow-mcp-connector
+name: Servicenow MCP Connector
+description: Team-owned ServiceNow MCP connector generated through Spec-Driven Development onboarding.
+owner_team: service-management-platform
+runtime_owner: service-management-platform
+business_owner: service-management-platform
+security_reviewer: security-platform
+support_channel: "#service-management-platform"
+on_call_rotation: service-management-platform-primary
+business_domain: service-management
+connector_type: issue_tracker
+version: 0.1.0
+status: draft
+runtime_type: remote
+deployment_mode: remote
+runtime_url: https://servicenow-mcp-connector.internal.example.com
+environment: dev
+slo:
+  availability: "99.5"
+  latency_p95_ms: 800
+maintenance:
+  patch_window: Tuesdays 18:00-20:00 local
+  owner_review_interval: quarterly
+deprecation_policy: 90-day notice before disabling production versions
+auth_type: api_token
+risk_level: high
+data_classification: confidential
+required_scopes:
+  - incident:read
+  - incident:write
+tools:
+  - name: servicenow.search_incidents
+    description: Search ServiceNow incidents.
+    type: read
+    risk_level: low
+    permission: tool:execute
+  - name: servicenow.get_incident
+    description: Read a ServiceNow incident by number.
+    type: read
+    risk_level: low
+    permission: tool:execute
+  - name: servicenow.create_incident
+    description: Create a ServiceNow incident.
+    type: write
+    risk_level: high
+    permission: tool:execute
+    requires_human_approval: true
+  - name: servicenow.update_incident
+    description: Update an existing ServiceNow incident.
+    type: write
+    risk_level: high
+    permission: tool:execute
+    requires_human_approval: true
+resources:
+  - name: servicenow_incident
+    uri: servicenow://incidents/{number}
+    description: Read-only ServiceNow incident resource.
+prompts:
+  - name: servicenow_incident_triage_prompt
+    description: Prompt for triaging a ServiceNow incident.
+policies:
+  audit_all_calls: true
+  allow_write_actions_by_default: false
+  require_project_access: true
+  require_human_approval_for_write_tools: true

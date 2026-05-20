@@ -200,6 +200,120 @@ Onboarding docs:
 - [ADK agent integration guide](docs/onboarding/adk-agent-integration-guide.md)
 - [MDK template integration guide](docs/onboarding/mdk-template-integration-guide.md)
 
+## Operating Model
+
+This starter kit uses a hybrid enterprise MCP model.
+
+Recommended enterprise model:
+
+- Centralized control plane.
+- Centralized MCP Gateway.
+- Platform-owned common connectors.
+- Distributed ownership for custom/domain connectors.
+- All execution still flows through MCP Gateway for policy, audit, observability, and secrets governance.
+
+AI Platform centrally owns the registry, gateway, auth/RBAC, policy, audit, observability, connector templates, approval workflow, SDKs, onboarding agent framework, and platform-owned common connectors such as Jira.
+
+Domain teams own distributed connector runtimes for systems they understand best. A service-management team can own a ServiceNow MCP server, a data platform team can own a Snowflake connector, and an internal tools team can own domain-specific MCP servers. Those teams maintain connector code, tool schemas, runtime SLOs, upstream API compatibility, docs, and connector-specific support.
+
+Teams request access to existing connectors when the catalog already has what they need. Teams create new connectors when no approved connector exists or when a domain-specific runtime is required. Platform/security reviews connector manifests, ownership, data classification, write actions, secret references, and production access before enablement.
+
+An onboarding agent guides users through access requests or new connector creation. It can collect intake, generate SDD artifacts, scaffold a connector repo, run validation, and prepare a review package. It does not approve production use.
+
+Hybrid is the default because centralized-only bottlenecks AI Platform, while distributed-only creates inconsistent governance. Hybrid keeps governance centralized and ownership scalable.
+
+```mermaid
+flowchart LR
+  DS["DS / ADK app"] --> Gateway["Central MCP Gateway"]
+  Gateway --> Registry["MCP Registry"]
+  Gateway --> Policy["Auth / RBAC / Policy"]
+  Gateway --> Audit["Audit / Observability"]
+  Gateway --> Jira["Platform-owned Jira connector"]
+  Gateway --> SN["Team-owned ServiceNow connector"]
+  Gateway --> Internal["Domain-owned internal connector"]
+  Jira --> JiraSys["Jira"]
+  SN --> SNSys["ServiceNow"]
+  Internal --> Enterprise["Enterprise systems"]
+```
+
+Operating model docs:
+
+- [Centralized vs distributed MCP](docs/architecture/centralized-vs-distributed-mcp.md)
+- [MCP server ownership](docs/operating-model/mcp-server-ownership.md)
+- [Connector lifecycle](docs/operating-model/connector-lifecycle.md)
+- [Support and on-call](docs/operating-model/support-and-oncall.md)
+- [Environment promotion](docs/operating-model/environment-promotion.md)
+- [Connector runtime contract](docs/contracts/mcp-connector-runtime-contract.md)
+- [Human approval workflow](docs/governance/human-approval-workflow.md)
+
+## Self-Service And Agent-Assisted Onboarding
+
+The platform supports three self-service modes.
+
+1. Portal form: a user fills a form to request connector access or propose a new connector.
+2. CLI: a user runs onboarding commands to generate access requests or connector repos.
+3. Onboarding agent: a user asks a natural language question and the agent converts it into SDD artifacts, connector scaffold, validation output, and a review request.
+
+The onboarding agent does not bypass governance. It accelerates intake, scaffolding, validation, and PR creation. Platform/security approval is still required for production use, restricted data, and high-risk write tools.
+
+```mermaid
+flowchart TD
+  User["User request"] --> Agent["Onboarding agent"]
+  Agent --> Req["requirements.md"]
+  Req --> Design["design.md"]
+  Design --> Tasks["tasks.md"]
+  Tasks --> Scaffold["connector scaffold"]
+  Scaffold --> Validation["validation"]
+  Validation --> Registration["registration request"]
+  Registration --> Review["platform/security review"]
+  Review --> Approved["approved connector"]
+  Approved --> Gateway["MCP Gateway execution"]
+```
+
+When a user asks, "I need my agent to use ServiceNow," the onboarding agent follows Spec-Driven Development:
+
+1. Intake
+2. Registry check
+3. Reuse-or-build decision
+4. `requirements.md` generation
+5. `design.md` generation
+6. `tasks.md` generation
+7. `connector.yaml` generation
+8. `policy.yaml` generation
+9. repo scaffold generation
+10. local validation
+11. registration request generation
+12. PR creation or review package creation
+13. platform/security approval routing
+
+For existing connectors:
+
+```bash
+npm run onboard:access -- --connector jira --project ai-platform-demo --tools jira.search_issues
+```
+
+For new connectors:
+
+```bash
+npm run onboard:connector -- --system servicenow --owner-team service-management-platform --mode new-repo
+npm run connector:create-repo -- --name servicenow-mcp-connector --template generic-rest-api --owner-team service-management-platform
+```
+
+The generated connector repo can be written inside `examples/generated-connectors/`, written as a standalone folder under `generated-repos/`, or created as a GitHub repo when `GITHUB_TOKEN` and `GITHUB_ORG` are configured. Local generation works without network access.
+
+Self-service docs and examples:
+
+- [Self-service onboarding model](docs/self-service/self-service-onboarding-model.md)
+- [Agent-assisted onboarding](docs/self-service/agent-assisted-onboarding.md)
+- [Spec-driven onboarding agent](docs/self-service/spec-driven-onboarding-agent.md)
+- [Generated connector repo model](docs/self-service/generated-connector-repo-model.md)
+- [Request lifecycle](docs/self-service/request-lifecycle.md)
+- [Spec-driven connector template](docs/templates/spec-driven-connector-template.md)
+- [Existing Jira access request](examples/self-service/existing-jira-access-request.yaml)
+- [New ServiceNow connector request](examples/self-service/new-servicenow-connector-request.yaml)
+- [Agent-assisted ServiceNow onboarding example](examples/self-service/agent-assisted-servicenow-onboarding.md)
+- [Generated ServiceNow connector repo](generated-repos/servicenow-mcp-connector/)
+
 ## Core Concepts
 
 MCP-native connector capabilities:
