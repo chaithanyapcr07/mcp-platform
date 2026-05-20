@@ -201,6 +201,29 @@ npm run dev
 npm run dev:web
 ```
 
+## Validated Local Workflow
+
+The repo is wired so a clean checkout can be validated from the root without manually building workspace packages one by one.
+
+```bash
+npm install
+npm run build
+npm test
+docker compose config
+docker compose up --build --wait
+```
+
+What this validates:
+
+- Workspace build order: shared types, policy core, SDKs, task runner, API, web, and connectors.
+- API tests can resolve `@mcp-platform/policy-core` after the root build.
+- Web TypeScript builds with NodeNext-compatible `.js` relative imports.
+- Docker Compose starts the full local stack from the root `compose.yaml`.
+- API image includes OpenSSL/CA certificates so Prisma migrations run in Docker.
+- Prometheus, Grafana, Jaeger, OTEL Collector, Jira mock connector, API, web, and Postgres start together.
+
+The legacy compose file remains at `infra/docker-compose.yml`, but the preferred developer command is now plain `docker compose ...` from the repository root.
+
 ## First Jira Mock Mode Test
 
 Mint a developer token:
