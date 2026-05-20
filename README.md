@@ -380,6 +380,23 @@ Useful endpoints:
 
 The telemetry sanitizer drops authorization headers, tokens, API keys, raw request bodies, comments, descriptions, and prompt text before attributes or audit export metadata are emitted.
 
+## Runtime Verification Checklist
+
+Verify these flows work end-to-end:
+
+1. Generate a connector from template.
+2. Run Jira connector in mock mode.
+3. Register Jira connector from registry/connectors/jira.yaml.
+4. Invoke jira.search_issues through the gateway.
+5. Deny an unauthorized jira.create_issue request.
+6. Write audit events for both allowed and denied requests.
+7. Emit OpenTelemetry traces for gateway, auth, RBAC, policy, connector invocation, and audit write.
+8. Expose Prometheus metrics for gateway, connector, policy, RBAC, and audit activity.
+9. Export audit events to a local SIEM-compatible JSONL file by default.
+10. Show the runtime data in Grafana dashboards.
+11. Show this flow in README with Mermaid diagrams.
+12. Explain ADK/MDK integration in docs/adk-mdk-integration.md.
+
 ## ADK Config Example
 
 ```yaml
