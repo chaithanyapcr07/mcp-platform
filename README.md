@@ -36,6 +36,170 @@ They should quickly get:
 - ADK/MDK app teams call the MCP Gateway instead of calling enterprise systems directly.
 - Auditors inspect allowed and denied runtime events.
 
+## Choose Your Onboarding Path
+
+| User type | Goal | Start here | Success looks like |
+|---|---|---|---|
+| DS / Agent Developer | Use approved connector | [DS onboarding guide](docs/onboarding/ds-consume-existing-connector.md) | Agent calls Jira through MCP Gateway |
+| Connector Owner | Build new connector | [Connector owner guide](docs/onboarding/connector-owner-build-new-connector.md) | Connector generated, tested, and registered |
+| Platform Admin | Govern usage | [Admin approval guide](docs/onboarding/platform-admin-approve-connector.md) | Connector approved and access controlled |
+| Security Reviewer | Review risk | [Security checklist](docs/onboarding/security-reviewer-checklist.md) | High-risk tools gated and audited |
+| ADK/MDK Developer | Wire app to gateway | [ADK](docs/onboarding/adk-agent-integration-guide.md) / [MDK](docs/onboarding/mdk-template-integration-guide.md) guides | App uses MCP Gateway, not direct system calls |
+
+### Path A: DS / Agent Developer Consumes An Existing Connector
+
+Example: "I want my agent to search Jira issues."
+
+Flow:
+
+1. Open the MCP Platform portal.
+2. Browse Connector Catalog.
+3. Select Jira Connector.
+4. Review available tools: `jira.search_issues`, `jira.get_issue`, `jira.create_issue`, `jira.add_comment`, `jira.transition_issue`.
+5. Request access for your project.
+6. Platform/security approves access.
+7. Get the MCP Gateway URL and project ID.
+8. Configure your ADK/MDK app to call MCP Gateway.
+9. Your agent invokes Jira through the gateway.
+10. Gateway checks auth, RBAC, policy, project access, and tool permission.
+11. Gateway calls the Jira connector.
+12. Audit events, metrics, and traces are written.
+13. Your agent app receives governed Jira results.
+
+Local MVP proof with Jira mock mode:
+
+```bash
+DEV_TOKEN=$(curl -s -X POST http://localhost:4000/auth/dev-token \
+  -H 'content-type: application/json' \
+  -d '{"email":"developer@example.com"}' | jq -r .token)
+
+curl -s -X POST http://localhost:4000/gateway/connectors/jira/tools/jira.search_issues/invoke \
+  -H "authorization: Bearer $DEV_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+    "projectId": "ai-platform-demo",
+    "input": {
+      "jql": "project = DEMO ORDER BY created DESC",
+      "maxResults": 10
+    }
+  }'
+```
+
+Denied write-action example:
+
+```bash
+curl -s -X POST http://localhost:4000/gateway/connectors/jira/tools/jira.create_issue/invoke \
+  -H "authorization: Bearer $DEV_TOKEN" \
+  -H "content-type: application/json" \
+  -d '{
+    "projectId": "ai-platform-demo",
+    "input": {
+      "projectKey": "DEMO",
+      "summary": "Bug from incident",
+      "description": "Created through governed MCP Gateway"
+    }
+  }'
+```
+
+This proves governance is enforced at runtime, not only represented as catalog metadata. The same flow is available without `jq` via:
+
+```bash
+npm run demo:jira-search
+npm run demo:jira-denied-write
+npm run demo:audit-events
+```
+
+### Path B: Connector Owner Builds A New Connector From Template
+
+Example: "My team wants to add a ServiceNow connector."
+
+Flow:
+
+1. Clone the repo.
+2. Run the connector generator.
+3. Choose a template.
+4. Implement tools/resources/prompts.
+5. Fill out `connector.yaml`.
+6. Add `.env.example` with secret placeholders only.
+7. Add tests.
+8. Run the connector locally.
+9. Register the connector in the registry.
+10. Submit for platform/security review.
+11. Project teams request access.
+12. Approved projects invoke the connector through MCP Gateway.
+
+Generator commands:
+
+```bash
+npm run connector:create -- --name my-jira-connector --template jira-like-issue-tracker
+npm run connector:create -- --name my-rest-connector --template generic-rest-api
+npm run connector:create -- --name my-docs-connector --template document-retrieval
+```
+
+Generated connectors include `connector.yaml`, `README.md`, `.env.example`, `Dockerfile`, `src/server.ts`, `src/tools/`, `src/resources/`, `src/prompts/`, `src/auth/`, `tests/`, local fixtures, and registration instructions. This generator is the reusable onboarding mechanism for new enterprise connectors.
+
+See [examples/generated-connectors/sample-servicenow](examples/generated-connectors/sample-servicenow/) for a lightly customized generated connector that shows the complete output shape.
+
+### Path C: ADK/MDK Application Integrates With The MCP Gateway
+
+Model:
+
+- MDK = app/runtime template layer.
+- ADK = agent behavior/workflow layer.
+- MCP Platform = governed enterprise tool/connectivity layer.
+
+ADK agents and MDK app templates should not call Jira, GitHub, ServiceNow, Slack, databases, or other enterprise systems directly. They should call MCP Gateway.
+
+Flow:
+
+`ADK Agent -> MCP Gateway -> Auth/RBAC/Policy -> Skill/Task Resolution -> Connector Tool -> Enterprise System`
+
+Example config:
+
+```yaml
+agent:
+  name: incident-response-agent
+  allowed_tasks:
+    - create-jira-ticket-from-incident
+    - summarize-open-incidents
+
+mcp:
+  gateway_url: http://localhost:4000
+  project_id: ai-platform-demo
+
+skills:
+  - incident-response-assistant
+  - engineering-ticket-management
+```
+
+This lets the platform enforce authentication, RBAC, project access, connector access, tool-level policy, human approval for write tools, secret references, rate limits, audit logs, OpenTelemetry traces, Prometheus metrics, and SIEM audit export.
+
+### Path D: Platform Admin / Security Reviewer Governs Connector Usage
+
+Flow:
+
+1. Review connector manifest.
+2. Review risk level and data classification.
+3. Review tools/resources/prompts.
+4. Check write actions.
+5. Verify secret handling uses references only.
+6. Approve or reject connector.
+7. Approve project access.
+8. Monitor gateway metrics.
+9. Review audit logs.
+10. Export audit events to SIEM.
+
+Jira write tools such as `jira.create_issue`, `jira.add_comment`, and `jira.transition_issue` are high-risk and should require approval by default.
+
+Onboarding docs:
+
+- [DS consumes an existing connector](docs/onboarding/ds-consume-existing-connector.md)
+- [Connector owner builds a new connector](docs/onboarding/connector-owner-build-new-connector.md)
+- [Platform admin approves a connector](docs/onboarding/platform-admin-approve-connector.md)
+- [Security reviewer checklist](docs/onboarding/security-reviewer-checklist.md)
+- [ADK agent integration guide](docs/onboarding/adk-agent-integration-guide.md)
+- [MDK template integration guide](docs/onboarding/mdk-template-integration-guide.md)
+
 ## Core Concepts
 
 MCP-native connector capabilities:

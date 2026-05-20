@@ -1,0 +1,39 @@
+id: sample-servicenow
+name: Sample ServiceNow MCP Connector
+description: Generated-style connector example for ServiceNow incident search and read access.
+owner_team: it-platform
+business_domain: it-operations
+connector_type: service_management
+version: 0.1.0
+status: draft
+runtime_type: managed
+auth_type: api_token
+risk_level: high
+data_classification: confidential
+deployment_target: local-docker
+source_repository: examples/generated-connectors/sample-servicenow
+documentation_url: examples/generated-connectors/sample-servicenow/README.md
+required_scopes:
+  - read:servicenow-incident
+tools:
+  - name: servicenow.search_incidents
+    description: Search ServiceNow incidents using approved query filters.
+    type: read
+    risk_level: low
+    permission: tool:execute
+  - name: servicenow.get_incident
+    description: Read one ServiceNow incident by number.
+    type: read
+    risk_level: low
+    permission: tool:execute
+resources:
+  - name: servicenow_incident
+    uri: servicenow://incidents/{number}
+    description: Read-only ServiceNow incident resource.
+prompts:
+  - name: servicenow_incident_summary_prompt
+    description: Summarize an incident for support handoff.
+policies:
+  audit_all_calls: true
+  allow_write_actions_by_default: false
+  require_project_access: true

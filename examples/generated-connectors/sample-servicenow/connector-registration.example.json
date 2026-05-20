@@ -1,0 +1,19 @@
+{
+  "id": "sample-servicenow",
+  "name": "Sample ServiceNow MCP Connector",
+  "description": "Generated example connector for read-only ServiceNow incident search and lookup.",
+  "ownerTeam": "ai-platform",
+  "businessDomain": "it-service-management",
+  "connectorType": "service-management",
+  "version": "0.1.0",
+  "status": "draft",
+  "runtimeType": "managed",
+  "authType": "api_token",
+  "riskLevel": "high",
+  "dataClassification": "confidential",
+  "requiredScopes": ["incident:read"],
+  "deploymentTarget": "local",
+  "sourceRepository": "examples/generated-connectors/sample-servicenow",
+  "documentationUrl": "examples/generated-connectors/sample-servicenow/README.md"
+}
+

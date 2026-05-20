@@ -1,0 +1,24 @@
+template:
+  name: incident-response-mdk-template
+  description: Runtime template for ADK agents that use governed MCP Gateway tools.
+  runtime: node20
+  entrypoint: src/main.ts
+
+environment:
+  required:
+    - MCP_GATEWAY_URL
+    - MCP_PROJECT_ID
+
+mcp_gateway_client:
+  config_file: mcp-gateway-client.yaml
+
+allowed_skills:
+  - incident-response-assistant
+  - engineering-ticket-management
+
+allowed_tasks:
+  - create-jira-ticket-from-incident
+  - summarize-open-incidents
+
+local_test:
+  command: npm run demo:jira-search

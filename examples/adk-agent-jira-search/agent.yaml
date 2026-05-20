@@ -1,0 +1,18 @@
+agent:
+  name: incident-response-agent
+  description: Searches Jira through MCP Gateway for incident response context.
+  allowed_tasks:
+    - create-jira-ticket-from-incident
+    - summarize-open-incidents
+
+mcp:
+  gateway_url: http://localhost:4000
+  project_id: ai-platform-demo
+
+skills:
+  - incident-response-assistant
+  - engineering-ticket-management
+
+tools:
+  - jira.search_issues
+  - jira.get_issue
