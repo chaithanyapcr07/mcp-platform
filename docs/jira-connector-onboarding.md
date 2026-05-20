@@ -19,7 +19,7 @@ curl http://localhost:4200/health
 ## Run The Platform
 
 ```bash
-docker compose -f infra/docker-compose.yml up --build
+docker compose up --build
 ```
 
 ## Invoke Search Through Gateway

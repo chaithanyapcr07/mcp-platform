@@ -15,6 +15,10 @@ import { getMetricsSnapshot, prometheusContentType, prometheusMetrics } from "./
 import { observabilityConfig } from "./observability/tracing.js";
 import { getSiemExportStatus } from "./audit/siem-exporter.js";
 
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unexpected server error";
+}
+
 export async function buildApp(db: DbClient = prisma) {
   const app = Fastify({
     logger: {
@@ -64,11 +68,11 @@ export async function buildApp(db: DbClient = prisma) {
       });
       return;
     }
-    if ("issues" in error || error.name === "ZodError") {
+    if (typeof error === "object" && error !== null && ("issues" in error || (error as { name?: string }).name === "ZodError")) {
       reply.status(400).send({ error: { code: "validation_failed", message: "Request validation failed", details: error } });
       return;
     }
-    reply.status(500).send({ error: { code: "internal_error", message: error.message } });
+    reply.status(500).send({ error: { code: "internal_error", message: getErrorMessage(error) } });
   });
 
   return app;

@@ -357,7 +357,7 @@ export async function registerGatewayRoutes(app: FastifyInstance) {
         projectId,
         actorId: actor(request).id,
         status: "running",
-        input: body.input ?? body
+        input: (body.input ?? body) as any
       }
     });
 
@@ -440,7 +440,7 @@ export async function registerGatewayRoutes(app: FastifyInstance) {
         connectorId,
         toolName,
         status: "running",
-        input: body.input ?? body
+        input: (body.input ?? body) as any
       }
     });
     try {

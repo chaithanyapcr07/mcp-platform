@@ -178,7 +178,7 @@ cp .env.example .env
 npm run db:generate
 npm run db:deploy -w @mcp-platform/api
 npm run db:seed
-docker compose -f infra/docker-compose.yml up --build
+docker compose up --build
 ```
 
 Services:
@@ -349,7 +349,7 @@ flowchart LR
   Audit --> Prometheus
 ```
 
-After `docker compose -f infra/docker-compose.yml up --build`, invoke Jira mock mode and then force an audit export:
+After `docker compose up --build`, invoke Jira mock mode and then force an audit export:
 
 ```bash
 curl -s -X POST http://localhost:4000/gateway/connectors/jira/tools/jira.search_issues/invoke \

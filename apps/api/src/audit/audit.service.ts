@@ -44,7 +44,7 @@ export async function writeAuditEvent(db: DbClient, input: AuditEventInput) {
         spanId: event.spanId,
         riskLevel: event.riskLevel,
         dataClassification: event.dataClassification,
-        metadata: event.metadata
+        metadata: event.metadata as any
       }
     });
     recordAuditEvent({
@@ -59,13 +59,14 @@ export async function writeAuditEvent(db: DbClient, input: AuditEventInput) {
   });
 }
 
-export async function listAuditEvents(db: DbClient, query: { projectId?: string; requestId?: string; take?: number }) {
+export async function listAuditEvents(db: DbClient, query: { projectId?: string; requestId?: string; take?: number | string }) {
+  const take = typeof query.take === "string" ? Number(query.take) : query.take;
   return db.auditEvent.findMany({
     where: {
       projectId: query.projectId,
       requestId: query.requestId
     },
     orderBy: { timestamp: "desc" },
-    take: query.take ?? 100
+    take: Number.isFinite(take) ? take : 100
   });
 }

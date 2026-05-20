@@ -9,7 +9,7 @@
     "connectors/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @mcp-platform/shared-types && npm run build -w @mcp-platform/policy-core && npm run build -w @mcp-platform/connector-sdk && npm run build -w @mcp-platform/skill-sdk && npm run build -w @mcp-platform/task-runner && npm run build -w @mcp-platform/api && npm run build -w @mcp-platform/web && npm run build -w @mcp-platform/local-knowledge-base && npm run build -w @mcp-platform/jira-connector",
     "dev": "npm run dev -w @mcp-platform/api",
     "dev:web": "npm run dev -w @mcp-platform/web",
     "dev:connector": "npm run dev -w @mcp-platform/local-knowledge-base",
@@ -18,7 +18,8 @@
     "db:generate": "npm run db:generate -w @mcp-platform/api",
     "db:migrate": "npm run db:migrate -w @mcp-platform/api",
     "db:seed": "npm run db:seed -w @mcp-platform/api",
-    "test": "npm test --workspaces --if-present",
+    "test": "npm run build && npm run test:workspaces",
+    "test:workspaces": "npm test --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present"
   },
   "engines": {

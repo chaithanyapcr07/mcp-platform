@@ -42,12 +42,12 @@ export function sanitizeActorId(actorId?: string) {
 
 export function safeReasonCode(reason?: string) {
   const normalized = (reason ?? "UNKNOWN").toUpperCase();
+  if (normalized.includes("WRITE")) return "HIGH_RISK_WRITE_BLOCKED";
   if (normalized.includes("PROJECT") && normalized.includes("ACCESS")) return "PROJECT_ACCESS_DENIED";
   if (normalized.includes("RBAC") || normalized.includes("PERMISSION") || normalized.includes("LACKS")) return "RBAC_DENIED";
   if (normalized.includes("APPROVAL")) return "APPROVAL_REQUIRED";
   if (normalized.includes("STATUS")) return "CONNECTOR_STATUS_DENIED";
   if (normalized.includes("RESTRICTED")) return "RESTRICTED_DATA_DENIED";
-  if (normalized.includes("WRITE")) return "HIGH_RISK_WRITE_BLOCKED";
   if (normalized.includes("ALLOWED")) return "POLICY_ALLOWED";
   return "POLICY_DENIED";
 }

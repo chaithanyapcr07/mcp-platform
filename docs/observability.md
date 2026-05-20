@@ -4,7 +4,7 @@ This platform ships with a local observability stack that exercises the real gat
 
 ## Local Stack
 
-`infra/docker-compose.yml` starts:
+The root `compose.yaml` starts:
 
 - MCP Platform API and Gateway on `http://localhost:4000`
 - Jira connector mock runtime on `http://localhost:4200`
@@ -119,7 +119,7 @@ Dashboards:
 1. Start the platform:
 
 ```bash
-docker compose -f infra/docker-compose.yml up --build
+docker compose up --build
 ```
 
 2. Mint a token:

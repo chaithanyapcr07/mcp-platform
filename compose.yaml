@@ -1,0 +1,138 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: mcp
+      POSTGRES_PASSWORD: mcp
+      POSTGRES_DB: mcp_platform
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mcp -d mcp_platform"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  local-knowledge-base:
+    build:
+      context: .
+      dockerfile: connectors/local-knowledge-base/Dockerfile
+    environment:
+      CONNECTOR_PORT: 4100
+    ports:
+      - "4100:4100"
+
+  jira:
+    build:
+      context: .
+      dockerfile: connectors/jira/Dockerfile
+    environment:
+      JIRA_AUTH_MODE: mock
+      JIRA_CONNECTOR_PORT: 4200
+      TRACING_ENABLED: "true"
+      OTEL_SERVICE_NAME: mcp-jira-connector
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+    ports:
+      - "4200:4200"
+    depends_on:
+      - otel-collector
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://mcp:mcp@postgres:5432/mcp_platform?schema=public
+      JWT_SECRET: local-dev-secret-change-me
+      LOCAL_KB_CONNECTOR_URL: http://local-knowledge-base:4100
+      JIRA_CONNECTOR_URL: http://jira:4200
+      API_PORT: 4000
+      TRACING_ENABLED: "true"
+      METRICS_ENABLED: "true"
+      OTEL_SERVICE_NAME: mcp-platform-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      SIEM_EXPORT_MODE: local_jsonl
+      SIEM_EXPORT_PATH: /app/audit-exports/audit-events.jsonl
+      SIEM_EXPORT_BATCH_SIZE: 100
+      SIEM_EXPORT_INTERVAL_SECONDS: 5
+    ports:
+      - "4000:4000"
+    volumes:
+      - audit-exports:/app/audit-exports
+    depends_on:
+      postgres:
+        condition: service_healthy
+      local-knowledge-base:
+        condition: service_started
+      jira:
+        condition: service_started
+      otel-collector:
+        condition: service_started
+    command: sh -c "npm run db:generate -w @mcp-platform/api && npm run db:deploy -w @mcp-platform/api && npm run db:seed -w @mcp-platform/api && npm run start -w @mcp-platform/api"
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      VITE_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.104.0
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./infra/observability/otel-collector-config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    depends_on:
+      - jaeger
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    volumes:
+      - ./infra/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./infra/observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+
+volumes:
+  postgres-data:
+  audit-exports:
+  prometheus-data:
+  grafana-data:

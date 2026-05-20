@@ -1,11 +1,16 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { Activity, BookOpen, CheckCircle2, FileCode2, KeyRound, Play, ShieldCheck, Workflow } from "lucide-react";
-import { api, getDevToken } from "../lib/api";
-import { Badge } from "../components/Badge";
+import { api, getDevToken } from "../lib/api.js";
+import { Badge } from "../components/Badge.js";
 import "./styles.css";
 
 type Tab = "connectors" | "jira" | "templates" | "access" | "skills" | "tasks" | "audit";
+type DevTokenResponse = { token: string };
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unexpected request failure";
+}
 
 function statusTone(status: string) {
   if (status === "approved") return "good";
@@ -23,7 +28,9 @@ function App() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    getDevToken(email).then((result) => setToken(result.token)).catch((error) => setMessage(error.message));
+    getDevToken(email)
+      .then((result: DevTokenResponse) => setToken(result.token))
+      .catch((error: unknown) => setMessage(errorMessage(error)));
   }, [email]);
 
   useEffect(() => {
@@ -33,7 +40,7 @@ function App() {
       api<any[]>("/skills", token),
       api<any[]>("/tasks", token),
       api<any[]>("/templates", token)
-    ]).then(([connectors, skills, tasks, templates]) => setData({ connectors, skills, tasks, templates })).catch((error) => setMessage(error.message));
+    ]).then(([connectors, skills, tasks, templates]) => setData({ connectors, skills, tasks, templates })).catch((error: unknown) => setMessage(errorMessage(error)));
   }, [token]);
 
   const nav = useMemo(() => [
@@ -60,8 +67,8 @@ function App() {
         })
       });
       setMessage(JSON.stringify(result, null, 2));
-    } catch (error: any) {
-      setMessage(error.message);
+    } catch (error: unknown) {
+      setMessage(errorMessage(error));
     }
   }
 
@@ -80,8 +87,8 @@ function App() {
         })
       });
       setMessage(JSON.stringify(result, null, 2));
-    } catch (error: any) {
-      setMessage(error.message);
+    } catch (error: unknown) {
+      setMessage(errorMessage(error));
     }
   }
 
