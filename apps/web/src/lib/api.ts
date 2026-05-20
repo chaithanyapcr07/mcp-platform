@@ -1,5 +1,16 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:4000";
 
+export class ApiRequestError extends Error {
+  status: number;
+  body: any;
+
+  constructor(status: number, body: any) {
+    super(body.reason ?? body.error?.message ?? body.error ?? `Request failed: ${status}`);
+    this.status = status;
+    this.body = body;
+  }
+}
+
 export async function getDevToken(email: string) {
   const response = await fetch(`${API_URL}/auth/dev-token`, {
     method: "POST",
@@ -21,7 +32,7 @@ export async function api<T>(path: string, token: string, options: RequestInit =
   });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body.reason ?? body.error?.message ?? body.error ?? `Request failed: ${response.status}`);
+    throw new ApiRequestError(response.status, body);
   }
   return response.json();
 }

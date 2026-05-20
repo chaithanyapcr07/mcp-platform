@@ -116,6 +116,17 @@ export async function registerSelfServiceRoutes(app: FastifyInstance) {
 
   app.post("/self-service/access-requests", { preHandler: requireActor }, async (request: any) => {
     const body = accessRequestSchema.parse(request.body);
+    const existing = await app.db.selfServiceRequest.findFirst({
+      where: {
+        type: "existing_connector_access",
+        projectId: body.projectId,
+        connectorId: body.connectorId,
+        status: { in: ["requested", "submitted", "security_review", "platform_review", "approved"] }
+      },
+      include: { artifacts: true, approvalSteps: true, comments: true },
+      orderBy: { createdAt: "desc" }
+    });
+    if (existing) return { ...existing, reusedExisting: true };
     const created = await app.db.selfServiceRequest.create({
       data: {
         id: nanoid(),
@@ -147,6 +158,17 @@ export async function registerSelfServiceRoutes(app: FastifyInstance) {
 
   app.post("/self-service/connector-requests", { preHandler: requireActor }, async (request: any) => {
     const body = connectorRequestSchema.parse(request.body);
+    const connectorId = body.connectorId ?? `${body.desiredSystem}-mcp-connector`;
+    const existing = await app.db.selfServiceRequest.findFirst({
+      where: {
+        type: "new_connector_registration",
+        connectorId,
+        status: { in: ["draft", "submitted", "security_review", "platform_review", "approved"] }
+      },
+      include: { artifacts: true, approvalSteps: true, comments: true },
+      orderBy: { createdAt: "desc" }
+    });
+    if (existing) return { ...existing, reusedExisting: true };
     const created = await app.db.selfServiceRequest.create({
       data: {
         id: nanoid(),
@@ -156,7 +178,7 @@ export async function registerSelfServiceRoutes(app: FastifyInstance) {
         requesterId: actor(request).id,
         projectId: body.projectId,
         team: body.team,
-        connectorId: body.connectorId,
+        connectorId,
         desiredSystem: body.desiredSystem,
         requestedTools: body.requestedTools,
         readOrWriteIntent: body.readOrWriteIntent,
@@ -219,6 +241,21 @@ export async function registerSelfServiceRoutes(app: FastifyInstance) {
       },
       include: { artifacts: true, approvalSteps: true, comments: true }
     });
+    if (updated.type === "existing_connector_access" && updated.projectId && updated.connectorId) {
+      await app.db.connectorAccessRequest.upsert({
+        where: { projectId_connectorId: { projectId: updated.projectId, connectorId: updated.connectorId } },
+        update: { status: "approved", approvedBy: actor(request).id, accessLevel: updated.readOrWriteIntent === "read" ? "read" : "write" },
+        create: {
+          id: nanoid(),
+          projectId: updated.projectId,
+          connectorId: updated.connectorId,
+          status: "approved",
+          requestedBy: updated.requesterId,
+          approvedBy: actor(request).id,
+          accessLevel: updated.readOrWriteIntent === "read" ? "read" : "write"
+        }
+      });
+    }
     await auditSelfService(app, request, "self_service.request.approve", updated.id, body.reason ?? "Self-service request approved");
     return updated;
   });
@@ -244,6 +281,12 @@ export async function registerSelfServiceRoutes(app: FastifyInstance) {
       },
       include: { artifacts: true, approvalSteps: true, comments: true }
     });
+    if (updated.type === "existing_connector_access" && updated.projectId && updated.connectorId) {
+      await app.db.connectorAccessRequest.updateMany({
+        where: { projectId: updated.projectId, connectorId: updated.connectorId },
+        data: { status: "denied" }
+      });
+    }
     await auditSelfService(app, request, "self_service.request.reject", updated.id, body.reason ?? "Self-service request rejected");
     return updated;
   });
@@ -262,4 +305,3 @@ export async function registerSelfServiceRoutes(app: FastifyInstance) {
     return comment;
   });
 }
-
