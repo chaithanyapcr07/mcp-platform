@@ -1,33 +1,39 @@
 import { trace, context, propagation, type Span, SpanStatusCode } from "@opentelemetry/api";
-import { NodeSDK } from "@opentelemetry/sdk-node";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { Resource } from "@opentelemetry/resources";
-import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
-import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { sanitizeTelemetryAttributes } from "./sanitizer.js";
 
 const tracingEnabled = process.env.TRACING_ENABLED !== "false";
 const serviceName = process.env.OTEL_SERVICE_NAME ?? "mcp-platform-api";
 const otelEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT ?? "http://localhost:4318";
 
-let sdk: NodeSDK | undefined;
+let sdk: { start: () => void; shutdown: () => Promise<void> } | undefined;
 
 if (tracingEnabled) {
-  sdk = new NodeSDK({
-    resource: new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
-      [SemanticResourceAttributes.SERVICE_VERSION]: "local-dev"
-    }),
+  const [{ NodeSDK }, { OTLPTraceExporter }, resources, { getNodeAutoInstrumentations }] = await Promise.all([
+    import("@opentelemetry/sdk-node"),
+    import("@opentelemetry/exporter-trace-otlp-http"),
+    import("@opentelemetry/resources"),
+    import("@opentelemetry/auto-instrumentations-node")
+  ]);
+  const resourceAttributes = {
+    "service.name": serviceName,
+    "service.version": "local-dev"
+  };
+  const resource = "resourceFromAttributes" in resources
+    ? (resources as any).resourceFromAttributes(resourceAttributes)
+    : new (resources as any).Resource(resourceAttributes);
+  const startedSdk = new NodeSDK({
+    resource,
     traceExporter: new OTLPTraceExporter({
       url: `${otelEndpoint.replace(/\/$/, "")}/v1/traces`
-    }),
+    }) as any,
     instrumentations: [
       getNodeAutoInstrumentations({
         "@opentelemetry/instrumentation-fs": { enabled: false }
-      })
+      }) as any
     ]
-  });
-  sdk.start();
+  }) as any;
+  sdk = startedSdk;
+  startedSdk.start();
 }
 
 export const tracer = trace.getTracer(serviceName);
