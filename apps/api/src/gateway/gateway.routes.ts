@@ -74,11 +74,13 @@ async function resolveConnectorSecretReference(app: FastifyInstance, connectorId
   }, "mcp-gateway-local");
 }
 
-async function invokeRemoteConnector(connectorId: string, toolName: string, input: Record<string, unknown>, requestId: string) {
+export async function invokeRemoteConnector(connectorId: string, toolName: string, input: Record<string, unknown>, requestId: string) {
   const baseUrl = connectorId === "local-knowledge-base"
     ? process.env.LOCAL_KB_CONNECTOR_URL ?? "http://localhost:4100"
     : connectorId === "jira"
       ? process.env.JIRA_CONNECTOR_URL ?? "http://localhost:4200"
+      : connectorId === "servicenow"
+      ? process.env.SERVICENOW_CONNECTOR_URL ?? "http://localhost:4300"
       : undefined;
   if (!baseUrl) throw new ApiError(501, `No runtime adapter configured for connector ${connectorId}`, "connector_runtime_missing");
   return withSpan("connector.invoke", {
@@ -105,6 +107,8 @@ export async function registerGatewayRoutes(app: FastifyInstance) {
       ? process.env.LOCAL_KB_CONNECTOR_URL ?? "http://localhost:4100"
       : connectorId === "jira"
         ? process.env.JIRA_CONNECTOR_URL ?? "http://localhost:4200"
+        : connectorId === "servicenow"
+          ? process.env.SERVICENOW_CONNECTOR_URL ?? "http://localhost:4300"
         : undefined;
     if (!baseUrl) throw notFound("Connector runtime");
     return withSpan("connector.health", { connector_id: connectorId }, async () => {
@@ -183,7 +187,12 @@ export async function registerGatewayRoutes(app: FastifyInstance) {
             resourceId: `${connectorId}.${toolName}:${requestId}`,
             status: "pending",
             requestedBy: actor(request).id,
-            reason: decision.reason
+            reason: decision.reason,
+            requestId,
+            projectId,
+            connectorId,
+            toolName,
+            input: (body.input ?? {}) as any
           }
         });
       }

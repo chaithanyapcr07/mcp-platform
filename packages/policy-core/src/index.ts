@@ -38,7 +38,7 @@ export class PolicyEvaluator {
       return deny("Restricted data connector requires explicit project approval");
     }
     if (tool.write && !input.hasWriteAccess) {
-      return deny("Write-capable tools require explicit project write access");
+      return approval("Write-capable tools require explicit human approval or project write access", "write_tool_approval");
     }
     if (tool.write && (tool.riskLevel === "high" || connector.riskLevel === "high")) {
       return approval("High-risk write action requires human approval", "security_review");

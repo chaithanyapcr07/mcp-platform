@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { requireActor } from "../auth/auth.js";
 import { writeAuditEvent } from "../audit/audit.service.js";
 import { forbidden } from "../errors.js";
+import { invokeRemoteConnector } from "../gateway/gateway.routes.js";
+import { getConnectorManifest } from "../registry/registry.service.js";
 
 function actor(request: any) {
   if (!request.actor) throw forbidden("Authenticated actor required");
@@ -75,5 +77,58 @@ export async function registerApprovalRoutes(app: FastifyInstance) {
     });
     return approval;
   });
-}
 
+  app.post("/approvals/:id/execute", { preHandler: requireActor }, async (request: any) => {
+    const approval = await app.db.approval.findUniqueOrThrow({ where: { id: request.params.id } });
+    const requestActor = actor(request);
+    const canResume = approval.requestedBy === requestActor.id
+      || approval.reviewedBy === requestActor.id
+      || requestActor.permissions.includes("connector:approve")
+      || requestActor.roles.includes("security_reviewer");
+    if (!canResume) {
+      throw forbidden("Only the requester, reviewer, or platform/security approver can resume approved execution");
+    }
+    if (approval.status !== "approved") {
+      throw forbidden("Approval must be approved before execution can resume");
+    }
+    if (!approval.connectorId || !approval.toolName || !approval.projectId || !approval.input) {
+      throw forbidden("Approval does not include executable gateway context");
+    }
+    const connector = await getConnectorManifest(app.db, approval.connectorId);
+    const requestId = `${approval.requestId ?? request.id}:approved`;
+    const startedAt = Date.now();
+    const output = await invokeRemoteConnector(approval.connectorId, approval.toolName, approval.input as Record<string, unknown>, requestId);
+    await app.db.approval.update({
+      where: { id: approval.id },
+      data: { status: "executed" }
+    });
+    await writeAuditEvent(app.db, {
+      actorId: requestActor.id,
+      actorType: "user",
+      projectId: approval.projectId,
+      action: "approval.execute",
+      resourceType: approval.resourceType,
+      resourceId: approval.resourceId,
+      connectorId: approval.connectorId,
+      toolName: approval.toolName,
+      decision: "allowed",
+      reason: "Approved tool execution resumed",
+      reasonCode: "APPROVAL_EXECUTED",
+      requestId,
+      riskLevel: connector.riskLevel,
+      dataClassification: connector.dataClassification,
+      metadata: {
+        approvalId: approval.id,
+        reviewedBy: approval.reviewedBy,
+        latencyMs: Date.now() - startedAt
+      }
+    });
+    return {
+      requestId,
+      approvalId: approval.id,
+      connectorId: approval.connectorId,
+      toolName: approval.toolName,
+      output
+    };
+  });
+}

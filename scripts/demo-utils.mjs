@@ -5,12 +5,13 @@ export function gatewayUrl() {
 }
 
 export async function request(path, options = {}) {
+  const headers = {
+    ...(options.body ? { "content-type": "application/json" } : {}),
+    ...(options.headers ?? {})
+  };
   const response = await fetch(`${gatewayUrl()}${path}`, {
     ...options,
-    headers: {
-      "content-type": "application/json",
-      ...(options.headers ?? {})
-    }
+    headers
   });
   const text = await response.text();
   const body = text ? JSON.parse(text) : {};

@@ -260,6 +260,65 @@ async function main() {
     documentationUrl: "/docs/custom-connector-guide.md"
   });
 
+  await upsertConnector(prisma, {
+    id: "servicenow",
+    name: "ServiceNow MCP Connector",
+    description: "Provides governed access to ServiceNow incident search, read, create, and update operations.",
+    ownerTeam: "ai-platform",
+    businessDomain: "it-service-management",
+    connectorType: "issue_tracker",
+    version: "0.1.0",
+    status: "approved",
+    runtimeType: "managed",
+    authType: "api_token",
+    requiredScopes: ["incident:read", "incident:write"],
+    tools: [
+      {
+        name: "servicenow.search_incidents",
+        description: "Search ServiceNow incidents.",
+        inputSchema: { type: "object", properties: { query: { type: "string" }, limit: { type: "number" } } },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: false,
+        riskLevel: "low"
+      },
+      {
+        name: "servicenow.get_incident",
+        description: "Read a ServiceNow incident by number.",
+        inputSchema: { type: "object", properties: { number: { type: "string" } }, required: ["number"] },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: false,
+        riskLevel: "low"
+      },
+      {
+        name: "servicenow.create_incident",
+        description: "Create a ServiceNow incident.",
+        inputSchema: { type: "object", properties: { shortDescription: { type: "string" }, description: { type: "string" }, priority: { type: "string" } }, required: ["shortDescription"] },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: true,
+        riskLevel: "high"
+      },
+      {
+        name: "servicenow.update_incident",
+        description: "Update a ServiceNow incident.",
+        inputSchema: { type: "object", properties: { number: { type: "string" }, shortDescription: { type: "string" }, description: { type: "string" }, state: { type: "string" } }, required: ["number"] },
+        outputSchema: { type: "object" },
+        permissions: ["tool:execute"],
+        write: true,
+        riskLevel: "high"
+      }
+    ],
+    resources: [{ uri: "servicenow://incidents/{number}", description: "Read-only ServiceNow incident resource.", dataClassification: "confidential" }],
+    prompts: [{ name: "servicenow_incident_triage_prompt", description: "Prompt for incident triage.", arguments: [{ name: "number", required: true }] }],
+    riskLevel: "high",
+    dataClassification: "confidential",
+    deploymentTarget: "local-docker",
+    sourceRepository: "connectors/servicenow",
+    documentationUrl: "connectors/servicenow/README.md"
+  });
+
   await prisma.connectorSecret.upsert({
     where: { id: "jira-secret-ref" },
     update: {},
@@ -281,6 +340,20 @@ async function main() {
       id: "local-kb-secret-ref",
       connectorId: "local-knowledge-base",
       secretRef: "local/kb/api-key",
+      secretProvider: "local_mock",
+      secretVersion: "v1",
+      allowedRuntimeIdentity: "mcp-gateway-local",
+      rotationStatus: "current"
+    }
+  });
+
+  await prisma.connectorSecret.upsert({
+    where: { id: "servicenow-secret-ref" },
+    update: {},
+    create: {
+      id: "servicenow-secret-ref",
+      connectorId: "servicenow",
+      secretRef: "local/servicenow/api-token",
       secretProvider: "local_mock",
       secretVersion: "v1",
       allowedRuntimeIdentity: "mcp-gateway-local",
@@ -432,6 +505,11 @@ async function main() {
     where: { projectId_connectorId: { projectId: "ai-platform-demo", connectorId: "jira" } },
     update: { status: "approved", accessLevel: "restricted" },
     create: { id: nanoid(), projectId: "ai-platform-demo", connectorId: "jira", status: "approved", requestedBy: "u-admin", approvedBy: "u-admin", accessLevel: "restricted" }
+  });
+  await prisma.connectorAccessRequest.upsert({
+    where: { projectId_connectorId: { projectId: "ai-platform-demo", connectorId: "servicenow" } },
+    update: { status: "approved", accessLevel: "restricted" },
+    create: { id: nanoid(), projectId: "ai-platform-demo", connectorId: "servicenow", status: "approved", requestedBy: "u-admin", approvedBy: "u-admin", accessLevel: "restricted" }
   });
   await prisma.skillAccessRequest.upsert({
     where: { projectId_skillId: { projectId: "ai-platform-demo", skillId: "engineering-ticket-management" } },

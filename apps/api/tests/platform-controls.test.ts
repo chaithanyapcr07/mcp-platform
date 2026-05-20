@@ -263,4 +263,20 @@ describe("MCP Platform controls", () => {
     });
     expect(result.decision).toBe("requires_approval");
   });
+
+  it("routes write tools without project write access into approval instead of direct execution", () => {
+    const result = new PolicyEvaluator().evaluateConnectorTool({
+      actor,
+      connector: jiraConnector,
+      tool: jiraCreateTool,
+      hasProjectConnectorAccess: true,
+      hasExplicitRestrictedApproval: true,
+      hasWriteAccess: false,
+      requestId: "r1"
+    });
+    expect(result).toMatchObject({
+      decision: "requires_approval",
+      requiredApproval: "write_tool_approval"
+    });
+  });
 });

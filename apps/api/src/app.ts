@@ -14,6 +14,7 @@ import { registerApprovalRoutes } from "./approvals/approvals.routes.js";
 import { registerTemplateRoutes } from "./templates/templates.routes.js";
 import { registerGatewayRoutes } from "./gateway/gateway.routes.js";
 import { registerSelfServiceRoutes } from "./self-service/self-service.routes.js";
+import { registerOnboardingAgentRoutes } from "./onboarding-agent/onboarding-agent.routes.js";
 import { getMetricsSnapshot, prometheusContentType, prometheusMetrics } from "./observability/metrics.js";
 import { observabilityConfig } from "./observability/tracing.js";
 import { getSiemExportStatus } from "./audit/siem-exporter.js";
@@ -40,6 +41,7 @@ export async function buildApp(db: DbClient = prisma) {
   await registerApprovalRoutes(app);
   await registerTemplateRoutes(app);
   await registerSelfServiceRoutes(app);
+  await registerOnboardingAgentRoutes(app);
   await registerGatewayRoutes(app);
 
   app.get("/health", async () => ({ ok: true, service: "mcp-platform-api" }));

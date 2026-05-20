@@ -387,6 +387,11 @@ model Approval {
   requestedBy  String   @map("requested_by")
   reviewedBy   String?  @map("reviewed_by")
   reason       String?
+  requestId    String?  @map("request_id")
+  projectId    String?  @map("project_id")
+  connectorId  String?  @map("connector_id")
+  toolName     String?  @map("tool_name")
+  input        Json?
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("approvals")

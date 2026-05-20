@@ -39,6 +39,16 @@ services:
     depends_on:
       - otel-collector
 
+  servicenow:
+    build:
+      context: ..
+      dockerfile: connectors/servicenow/Dockerfile
+    environment:
+      SERVICENOW_AUTH_MODE: mock
+      SERVICENOW_CONNECTOR_PORT: 4300
+    ports:
+      - "4300:4300"
+
   api:
     build:
       context: ..
@@ -48,6 +58,7 @@ services:
       JWT_SECRET: local-dev-secret-change-me
       LOCAL_KB_CONNECTOR_URL: http://local-knowledge-base:4100
       JIRA_CONNECTOR_URL: http://jira:4200
+      SERVICENOW_CONNECTOR_URL: http://servicenow:4300
       API_PORT: 4000
       TRACING_ENABLED: "true"
       METRICS_ENABLED: "true"
@@ -67,6 +78,8 @@ services:
       local-knowledge-base:
         condition: service_started
       jira:
+        condition: service_started
+      servicenow:
         condition: service_started
       otel-collector:
         condition: service_started

@@ -106,6 +106,9 @@ This proves governance is enforced at runtime, not only represented as catalog m
 ```bash
 npm run demo:jira-search
 npm run demo:jira-denied-write
+npm run demo:jira-approved-write
+npm run demo:servicenow-search
+npm run demo:onboarding-agent
 npm run demo:audit-events
 ```
 
@@ -314,7 +317,9 @@ The API and portal now support first-class self-service requests:
 - `GET /approvals`
 - `POST /approvals/{id}/approve`
 - `POST /approvals/{id}/reject`
+- `POST /approvals/{id}/execute`
 - `POST /policy/simulate`
+- `POST /onboarding/agent/intake`
 
 ADK/MDK apps can use the typed gateway client instead of hand-writing gateway calls:
 
@@ -363,7 +368,7 @@ The next platform-side improvements are now tracked as implementation lanes:
 9. Gateway client SDK for ADK/MDK apps.
 10. Policy-as-code simulation and review tools.
 
-This repo now includes first slices for lanes 1, 3, 4, 5, 6, 7, 9, and 10: persisted self-service request APIs, approval queue APIs, connector validation, GitHub Actions CI, a self-service portal tab, a Gateway client SDK, and policy simulation.
+This repo now includes first slices for lanes 1, 2, 3, 4, 5, 6, 7, 8, 9, and 10: persisted self-service request APIs, a live onboarding agent intake API, approval queue APIs with approved execution resume, connector validation, GitHub Actions CI, a self-service portal tab, a ServiceNow golden connector, a Gateway client SDK, and policy simulation.
 
 ## Core Concepts
 
