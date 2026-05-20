@@ -297,9 +297,41 @@ For new connectors:
 ```bash
 npm run onboard:connector -- --system servicenow --owner-team service-management-platform --mode new-repo
 npm run connector:create-repo -- --name servicenow-mcp-connector --template generic-rest-api --owner-team service-management-platform
+npm run connector:validate -- --path generated-repos/servicenow-mcp-connector
 ```
 
 The generated connector repo can be written inside `examples/generated-connectors/`, written as a standalone folder under `generated-repos/`, or created as a GitHub repo when `GITHUB_TOKEN` and `GITHUB_ORG` are configured. Local generation works without network access.
+
+The API and portal now support first-class self-service requests:
+
+- `GET /self-service/requests`
+- `POST /self-service/access-requests`
+- `POST /self-service/connector-requests`
+- `POST /self-service/requests/{id}/submit`
+- `POST /self-service/requests/{id}/approve`
+- `POST /self-service/requests/{id}/reject`
+- `POST /self-service/requests/{id}/comments`
+- `GET /approvals`
+- `POST /approvals/{id}/approve`
+- `POST /approvals/{id}/reject`
+- `POST /policy/simulate`
+
+ADK/MDK apps can use the typed gateway client instead of hand-writing gateway calls:
+
+```ts
+import { McpGatewayClient } from "@mcp-platform/gateway-client";
+
+const client = new McpGatewayClient({
+  gatewayUrl: "http://localhost:4000",
+  token: process.env.DEV_TOKEN,
+  projectId: "ai-platform-demo"
+});
+
+await client.invokeTool("jira", "jira.search_issues", {
+  jql: "project = DEMO ORDER BY created DESC",
+  maxResults: 10
+});
+```
 
 Self-service docs and examples:
 
@@ -313,6 +345,25 @@ Self-service docs and examples:
 - [New ServiceNow connector request](examples/self-service/new-servicenow-connector-request.yaml)
 - [Agent-assisted ServiceNow onboarding example](examples/self-service/agent-assisted-servicenow-onboarding.md)
 - [Generated ServiceNow connector repo](generated-repos/servicenow-mcp-connector/)
+- [Gateway client SDK](packages/gateway-client/README.md)
+- [Connector validator](packages/connector-validator/README.md)
+
+## Platform Roadmap
+
+The next platform-side improvements are now tracked as implementation lanes:
+
+1. Portal self-service flows for access requests, connector proposals, request status, approvals, generated artifacts, audit, and trace links.
+2. Onboarding agent API that turns intake into SDD artifacts, scaffold, validation report, and review package.
+3. Request persistence for onboarding sessions, generated artifacts, comments, approval steps, and decisions.
+4. End-to-end human approval execution for high-risk write tools.
+5. Connector contract validation with CI gates.
+6. GitHub Actions for build, tests, Compose config, and connector validation.
+7. Portal pages organized around user jobs rather than generic dashboards.
+8. More golden path connectors such as GitHub, Slack, Confluence, and ServiceNow.
+9. Gateway client SDK for ADK/MDK apps.
+10. Policy-as-code simulation and review tools.
+
+This repo now includes first slices for lanes 1, 3, 4, 5, 6, 7, 9, and 10: persisted self-service request APIs, approval queue APIs, connector validation, GitHub Actions CI, a self-service portal tab, a Gateway client SDK, and policy simulation.
 
 ## Core Concepts
 

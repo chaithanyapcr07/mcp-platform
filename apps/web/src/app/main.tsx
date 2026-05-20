@@ -5,7 +5,7 @@ import { api, getDevToken } from "../lib/api.js";
 import { Badge } from "../components/Badge.js";
 import "./styles.css";
 
-type Tab = "connectors" | "jira" | "templates" | "access" | "skills" | "tasks" | "audit";
+type Tab = "connectors" | "jira" | "templates" | "access" | "selfService" | "skills" | "tasks" | "audit";
 type DevTokenResponse = { token: string };
 
 function errorMessage(error: unknown) {
@@ -39,8 +39,9 @@ function App() {
       api<any[]>("/connectors", token),
       api<any[]>("/skills", token),
       api<any[]>("/tasks", token),
-      api<any[]>("/templates", token)
-    ]).then(([connectors, skills, tasks, templates]) => setData({ connectors, skills, tasks, templates })).catch((error: unknown) => setMessage(errorMessage(error)));
+      api<any[]>("/templates", token),
+      api<any[]>("/self-service/requests", token)
+    ]).then(([connectors, skills, tasks, templates, selfService]) => setData({ connectors, skills, tasks, templates, selfService })).catch((error: unknown) => setMessage(errorMessage(error)));
   }, [token]);
 
   const nav = useMemo(() => [
@@ -48,6 +49,7 @@ function App() {
     ["jira", Workflow, "Jira Connector Example"],
     ["templates", FileCode2, "Connector Template Gallery"],
     ["access", KeyRound, "Project Access Requests"],
+    ["selfService", KeyRound, "Self-Service Requests"],
     ["skills", ShieldCheck, "Skill Catalog"],
     ["tasks", Play, "Task Catalog"],
     ["audit", Activity, "Audit Log"]
@@ -103,6 +105,54 @@ function App() {
       body: JSON.stringify({ name: "team-starter", ownerTeam: "ai-platform" })
     });
     setMessage(JSON.stringify(generated, null, 2));
+  }
+
+  async function refreshSelfService() {
+    const requests = await api<any[]>("/self-service/requests", token);
+    setData((current) => ({ ...current, selfService: requests }));
+  }
+
+  async function createJiraAccessRequest() {
+    const created = await api("/self-service/access-requests", token, {
+      method: "POST",
+      body: JSON.stringify({
+        projectId: "ai-platform-demo",
+        connectorId: "jira",
+        requestedTools: ["jira.search_issues"],
+        team: "incident-response",
+        readOrWriteIntent: "read",
+        businessJustification: "Use approved Jira search from an incident-response ADK agent.",
+        dataClassification: "confidential",
+        expectedVolume: "100 requests/day",
+        source: "portal"
+      })
+    });
+    await refreshSelfService();
+    setMessage(JSON.stringify(created, null, 2));
+  }
+
+  async function createServiceNowConnectorRequest() {
+    const created = await api("/self-service/connector-requests", token, {
+      method: "POST",
+      body: JSON.stringify({
+        projectId: "ai-platform-demo",
+        desiredSystem: "servicenow",
+        connectorId: "servicenow-mcp-connector",
+        requestedTools: ["servicenow.search_incidents", "servicenow.get_incident", "servicenow.create_incident", "servicenow.update_incident"],
+        team: "service-management-platform",
+        ownerTeam: "service-management-platform",
+        runtimeOwner: "service-management-platform",
+        securityReviewer: "security-platform",
+        deploymentMode: "remote",
+        readOrWriteIntent: "read_write",
+        businessJustification: "Generate a governed ServiceNow connector onboarding package for incident-response agents.",
+        dataClassification: "confidential",
+        expectedVolume: "500 requests/day",
+        source: "portal"
+      })
+    });
+    await refreshSelfService();
+    setMessage(JSON.stringify(created, null, 2));
   }
 
   return (
@@ -168,6 +218,28 @@ function App() {
             <h2>AI Platform Demo Project</h2>
             <p>Seeded access approvals let project developers invoke approved Jira read tools through the gateway. Write tools remain blocked until an approval workflow allows them.</p>
             <button onClick={invokeJiraSearch}><Play size={16} /> Verify Jira access</button>
+          </div>
+        )}
+
+        {tab === "selfService" && (
+          <div className="panel">
+            <h2>Self-Service MCP Onboarding</h2>
+            <p>Create a governed access request for an existing connector or propose a new team-owned connector. Requests keep generated artifacts, comments, approval steps, and audit trail together.</p>
+            <div className="actions inline">
+              <button onClick={createJiraAccessRequest}><KeyRound size={16} /> Request Jira access</button>
+              <button onClick={createServiceNowConnectorRequest}><FileCode2 size={16} /> Propose ServiceNow connector</button>
+              <button onClick={refreshSelfService}><Activity size={16} /> Refresh</button>
+            </div>
+            <div className="table">
+              {(data.selfService ?? []).map((request) => (
+                <button className="tableRow clickable" key={request.id} onClick={() => setSelected(request)}>
+                  <span>{request.type}</span>
+                  <strong>{request.connectorId ?? request.desiredSystem}</strong>
+                  <Badge tone={request.status === "approved" ? "good" : request.status === "rejected" ? "danger" : "warn"}>{request.status}</Badge>
+                  <span>{request.projectId ?? request.team}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

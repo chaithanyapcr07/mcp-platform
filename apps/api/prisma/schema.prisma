@@ -446,3 +446,80 @@ model RateLimit {
   @@unique([scope, scopeId])
   @@map("rate_limits")
 }
+
+model SelfServiceRequest {
+  id                    String              @id
+  type                  String
+  source                String              @default("portal")
+  status                String
+  requesterId           String              @map("requester_id")
+  projectId             String?             @map("project_id")
+  team                  String?
+  connectorId           String?             @map("connector_id")
+  desiredSystem         String?             @map("desired_system")
+  requestedTools        String[]            @map("requested_tools")
+  readOrWriteIntent     String              @map("read_or_write_intent")
+  businessJustification String              @map("business_justification")
+  dataClassification    String              @map("data_classification")
+  expectedVolume        String?             @map("expected_volume")
+  approvalRequired      Boolean             @default(true) @map("approval_required")
+  approvers             String[]
+  ownerTeam             String?             @map("owner_team")
+  runtimeOwner          String?             @map("runtime_owner")
+  securityReviewer      String?             @map("security_reviewer")
+  deploymentMode        String?             @map("deployment_mode")
+  metadata              Json
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+  artifacts             GeneratedArtifact[]
+  approvalSteps         ApprovalStep[]
+  comments              RequestComment[]
+
+  @@index([projectId])
+  @@index([connectorId])
+  @@index([desiredSystem])
+  @@index([status])
+  @@map("self_service_requests")
+}
+
+model GeneratedArtifact {
+  id        String             @id
+  requestId String             @map("request_id")
+  name      String
+  kind      String
+  path      String?
+  content   String?
+  createdAt DateTime           @default(now()) @map("created_at")
+  request   SelfServiceRequest @relation(fields: [requestId], references: [id])
+
+  @@index([requestId])
+  @@map("generated_artifacts")
+}
+
+model ApprovalStep {
+  id             String             @id
+  requestId      String             @map("request_id")
+  stepName       String             @map("step_name")
+  status         String
+  approverRole   String             @map("approver_role")
+  approverId     String?            @map("approver_id")
+  decisionReason String?            @map("decision_reason")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  reviewedAt     DateTime?          @map("reviewed_at")
+  request        SelfServiceRequest @relation(fields: [requestId], references: [id])
+
+  @@index([requestId])
+  @@map("approval_steps")
+}
+
+model RequestComment {
+  id        String             @id
+  requestId String             @map("request_id")
+  authorId  String             @map("author_id")
+  body      String
+  createdAt DateTime           @default(now()) @map("created_at")
+  request   SelfServiceRequest @relation(fields: [requestId], references: [id])
+
+  @@index([requestId])
+  @@map("request_comments")
+}

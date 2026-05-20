@@ -175,6 +175,18 @@ export async function registerGatewayRoutes(app: FastifyInstance) {
     }, (Date.now() - policyStarted) / 1000);
 
     if (decision.decision !== "allowed") {
+      if (decision.decision === "requires_approval") {
+        await app.db.approval.create({
+          data: {
+            id: nanoid(),
+            resourceType: "tool_execution",
+            resourceId: `${connectorId}.${toolName}:${requestId}`,
+            status: "pending",
+            requestedBy: actor(request).id,
+            reason: decision.reason
+          }
+        });
+      }
       incrementMetric("policy_denial_count", { connectorId, toolName });
       recordGatewayRequest({
         connectorId,

@@ -7,10 +7,13 @@ import { registerAuth } from "./auth/auth.js";
 import { ApiError } from "./errors.js";
 import { registerRegistryRoutes } from "./registry/registry.routes.js";
 import { registerProjectRoutes } from "./projects/projects.routes.js";
+import { registerPolicyRoutes } from "./policy/policy.routes.js";
 import { registerRbacRoutes } from "./rbac/rbac.routes.js";
 import { registerAuditRoutes } from "./audit/audit.routes.js";
+import { registerApprovalRoutes } from "./approvals/approvals.routes.js";
 import { registerTemplateRoutes } from "./templates/templates.routes.js";
 import { registerGatewayRoutes } from "./gateway/gateway.routes.js";
+import { registerSelfServiceRoutes } from "./self-service/self-service.routes.js";
 import { getMetricsSnapshot, prometheusContentType, prometheusMetrics } from "./observability/metrics.js";
 import { observabilityConfig } from "./observability/tracing.js";
 import { getSiemExportStatus } from "./audit/siem-exporter.js";
@@ -31,9 +34,12 @@ export async function buildApp(db: DbClient = prisma) {
   await registerAuth(app, db);
   await registerRegistryRoutes(app);
   await registerProjectRoutes(app);
+  await registerPolicyRoutes(app);
   await registerRbacRoutes(app);
   await registerAuditRoutes(app);
+  await registerApprovalRoutes(app);
   await registerTemplateRoutes(app);
+  await registerSelfServiceRoutes(app);
   await registerGatewayRoutes(app);
 
   app.get("/health", async () => ({ ok: true, service: "mcp-platform-api" }));

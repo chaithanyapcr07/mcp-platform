@@ -198,6 +198,21 @@ h2 {
   padding: 10px 0;
 }
 
+.tableRow.clickable {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+.tableRow.clickable:hover {
+  background: #f6faf7;
+}
+
 .drawer {
   position: fixed;
   top: 0;
