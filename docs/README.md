@@ -68,6 +68,10 @@ Read next:
 
 - [self-service/self-service-onboarding-model.md](self-service/self-service-onboarding-model.md)
 - [self-service/agent-assisted-onboarding.md](self-service/agent-assisted-onboarding.md)
+- [self-service/self-service-agent-orchestrator.md](self-service/self-service-agent-orchestrator.md)
+- [self-service/natural-language-to-mcp-workflow.md](self-service/natural-language-to-mcp-workflow.md)
+- [self-service/agent-intent-routing.md](self-service/agent-intent-routing.md)
+- [self-service/agent-safety-and-approval-boundaries.md](self-service/agent-safety-and-approval-boundaries.md)
 - [self-service/spec-driven-onboarding-agent.md](self-service/spec-driven-onboarding-agent.md)
 - [self-service/generated-connector-repo-model.md](self-service/generated-connector-repo-model.md)
 - [self-service/request-lifecycle.md](self-service/request-lifecycle.md)

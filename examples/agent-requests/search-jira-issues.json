@@ -1,0 +1,8 @@
+{
+  "projectId": "ai-platform-demo",
+  "message": "Can you search Jira issues for project DEMO?",
+  "context": {
+    "jql": "project = DEMO ORDER BY created DESC",
+    "maxResults": 10
+  }
+}

@@ -1,0 +1,21 @@
+search-jira-issues:
+  connector: jira
+  tool: jira.search_issues
+  type: read
+  default_decision: allowed_if_project_has_access
+
+create-jira-ticket:
+  connector: jira
+  tool: jira.create_issue
+  type: write
+  default_decision: approval_required
+
+create-servicenow-ticket:
+  connector: servicenow
+  tool: servicenow.create_incident
+  type: write
+  default_decision: approval_required
+
+onboard-servicenow-connector:
+  workflow: sdd_connector_onboarding
+  default_decision: review_required

@@ -61,6 +61,9 @@ npm run demo:jira-denied-write
 npm run demo:jira-approved-write
 npm run demo:servicenow-search
 npm run demo:onboarding-agent
+npm run demo:agent-search-jira
+npm run demo:agent-create-servicenow-ticket
+npm run demo:agent-onboard-servicenow
 npm run demo:audit-events
 npm run demo:observability
 ```
@@ -71,8 +74,49 @@ What these prove:
 - Jira write actions are approval-gated.
 - Approved write execution can be resumed.
 - ServiceNow mock connector works through the same gateway path.
+- The self-service agent can turn plain English into access requests, approval-gated actions, or gateway calls.
 - Audit events include request and trace IDs.
 - Observability is available locally.
+
+## Natural Language Self-Service Agent
+
+Users can ask:
+
+- “Can you help me onboard to ServiceNow?”
+- “Can you create a ServiceNow ticket?”
+- “Can you search Jira issues?”
+
+The platform converts the request into one of these governed outcomes:
+
+- access request
+- SDD connector onboarding flow
+- approval-required tool execution
+- direct allowed gateway invocation
+- unsupported request that asks for clarification
+
+```mermaid
+flowchart LR
+  User["User"] --> Agent["Self-Service Agent"]
+  Agent --> Router["Intent Router"]
+  Router --> Planner["Workflow Planner"]
+  Planner --> Registry["Registry / Policy"]
+  Planner --> Approval["Approval Workflow if needed"]
+  Planner --> Gateway["MCP Gateway"]
+  Gateway --> Connector["Connector"]
+  Connector --> System["Enterprise System"]
+  Agent --> Audit["Audit / Metrics / Traces"]
+  Gateway --> Audit
+```
+
+The agent does not call Jira or ServiceNow directly. It creates platform requests or calls MCP Gateway, where auth, RBAC, policy, approvals, audit, metrics, and traces are enforced.
+
+Try it locally:
+
+```bash
+npm run demo:agent-search-jira
+npm run demo:agent-create-servicenow-ticket
+npm run demo:agent-onboard-servicenow
+```
 
 ## How Someone Onboards
 
@@ -167,6 +211,8 @@ Most other enterprise connectors in the catalog are intentionally seed metadata 
 - Architecture and diagrams: [docs/README.md](docs/README.md)
 - DS onboarding: [docs/onboarding/ds-consume-existing-connector.md](docs/onboarding/ds-consume-existing-connector.md)
 - Connector owner guide: [docs/onboarding/connector-owner-build-new-connector.md](docs/onboarding/connector-owner-build-new-connector.md)
+- Self-service agent: [docs/self-service/self-service-agent-orchestrator.md](docs/self-service/self-service-agent-orchestrator.md)
+- Natural language workflow: [docs/self-service/natural-language-to-mcp-workflow.md](docs/self-service/natural-language-to-mcp-workflow.md)
 - ADK/MDK integration: [docs/adk-mdk-integration.md](docs/adk-mdk-integration.md)
 - Observability: [docs/observability.md](docs/observability.md)
 - SIEM audit export: [docs/siem-audit-export.md](docs/siem-audit-export.md)
